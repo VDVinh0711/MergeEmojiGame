@@ -38,18 +38,22 @@ class Fruit extends GameObject {
         this.context.setTransform(1, 0, 0, 1, 0, 0);
     }
 
-
+    //Update Changr radius , type, color
     updateFruit(radius, type, color) {
         this.radius = radius;
         this.type = type;
         this.color = color;
     }
+
+
+    
     update(deltatime) {
         this.x += this.vx * deltatime;
         this.y += this.vy * deltatime;
         this.handelGravity(deltatime);
         this.rotate(deltatime);
     }
+
 
     handelGravity(deltatime) {
         if (!this.useGravity) return;
@@ -62,6 +66,7 @@ class Fruit extends GameObject {
         this.canCheckLose = true;
         this.isColiding = true;
     }
+
     rotate(deltatime) {
         let radians = Math.atan2(this.vy * deltatime, this.vx * deltatime);
         this.angle = (180 * radians / Math.PI);
@@ -118,7 +123,6 @@ class Dot {
 
 
 // Partical
-const friction = 0.99
 class Particle {
   constructor( context,x, y, radius, color, vx,vy) {
     this.x = x
@@ -146,4 +150,36 @@ class Particle {
     this.y +=  this.vy * deltatime;
     this.alpha -= 0.02;
   }
+}
+
+
+class TextScore
+{
+    constructor( context,x,y,text)
+    {
+        this.x = x,
+        this.context = context;
+        this.y = y,
+        this.text = text;
+        this.alpha = 1;
+    }
+
+
+    draw() {
+        this.context.save()
+        context.beginPath();
+        this.context.globalAlpha = this.alpha
+        this.context.fillStyle = 'black';
+        this.context.fillText(`${this.text}`, this.x, this.y);
+        this.context.font = '20px Arial';
+        this.context.textAlign = 'center';
+        this.context.textBaseline = 'top';
+        this.context.restore()
+      }
+
+    update(deltatime)
+    {
+        this.alpha -= 0.01;
+    }
+
 }
