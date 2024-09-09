@@ -1,9 +1,6 @@
 
 
 "use-strict"
-//Global Variable
-let canvas;
-let context;
 
 
 
@@ -24,42 +21,42 @@ const FruitDatas =
     {
         type: TypeOfFruit.WaterMelon,
         color: '#4CAF50',
-        radius: 30,
+        radius: 15,
         point: 10,
     },
     Banana:
     {
         type: TypeOfFruit.Banana,
         color: '#FFEB3B',
-        radius: 35,
+        radius: 20,
         point: 20,
     },
     Apple:
     {
         type: TypeOfFruit.Apple,
         color: '#FF0800',
-        radius: 40,
+        radius: 25,
         point: 30,
     },
     Mango:
     {
         type: TypeOfFruit.Mango,
         color: '#FF8C00',
-        radius: 45,
+        radius: 30,
         point: 40,
     },
     Pineapple:
     {
         type: TypeOfFruit.Pineapple,
         color: '#D4AF37',
-        radius: 50,
+        radius: 35,
         point: 50,
     },
     Cherry:
     {
         type: TypeOfFruit.Cherry,
         color: '#DE3163 ',
-        radius: 55,
+        radius: 40,
         point: 60,
     },
 
@@ -91,6 +88,14 @@ function getNextFruit(current) {
 
 
 
+//Global Variable
+let canvas;
+let context;
+
+
+let animationId;
+
+
 
 
 //PlayerConfig
@@ -111,9 +116,10 @@ let fruitSpawm;
 //VariableUntil
 let isDrag = false;
 let canSpawm = true;
-const originTimeDelay = 0.3;
-let timeDelaySpawm = 0.3;
-
+const originTimeDelay = 0.5;
+let timeDelaySpawm = 0.5;
+let timeCountDownLose = 4;
+const timeOriginCountDown = 4;
 
 
 //CofigBox
@@ -129,6 +135,10 @@ function Init() {
     canvas = document.getElementById("mainview");
     context = canvas.getContext('2d');
 
+    isWin = false;
+    isLose = false;
+    timeDelaySpawm = originTimeDelay;
+    timeCountDownLose = timeOriginCountDown;
 
     rightBox = canvas.width / 2 + 200;
     leftBox = canvas.width / 2 - 200;
@@ -141,15 +151,21 @@ function Init() {
 
 //Main Loop
 function gameLoop(timeStamp) {
+
+    
     secondsPassed = (timeStamp - oldTimeStamp) / 1000;
     secondsPassed = Math.min(secondsPassed, 0.1);
     fps = Math.round(1 / secondsPassed);
     oldTimeStamp = timeStamp;
 
-    gameUpdate(secondsPassed);
-    gameColision();
-    detectedColisionBox();
-    gameDraw();
+    if (!isLose && !isWin) 
+    {
+        gameUpdate(secondsPassed);
+        gameColision();
+        detectedColisionBox();
+        gameDraw();
+    }
+  
     window.requestAnimationFrame(gameLoop);
 }
 
@@ -179,6 +195,20 @@ function gameUpdate(deltatime) {
             particle.update(deltatime)
         }
     })
+
+
+    if (ColiWithBarie()) {
+        timeCountDownLose -= deltatime;
+
+        if (timeCountDownLose <= 0) {
+            isLose = true;
+            console.log("losse")
+        }
+
+    }
+    else {
+        timeCountDownLose = timeOriginCountDown;
+    }
 }
 
 
@@ -212,7 +242,7 @@ function gameColision() {
         obj.isColiding = false;
     });
 
-    //Check Colision
+    //Check Colision With Us
     for (let i = gameObjects.length - 1; i >= 0; i--) {
         const obj1 = gameObjects[i];
         for (let j = gameObjects.length - 1; j >= i + 1; j--) {
@@ -228,13 +258,31 @@ function gameColision() {
                     let speed = obj1.vColisionNor.x * vRelavityVelocity.x + obj1.vColisionNor.y * vRelavityVelocity.y;
                     obj1.updateV(speed, obj2.mass, -1);
                     obj2.updateV(speed, obj1.mass, 1);
-                    obj1.isColiding = true;
-                    obj2.isColiding = true;
+                    obj1.handelColison();
+                    obj2.handelColison();
                 }
             }
         }
     }
+
+
 }
+
+
+
+
+function ColiWithBarie() {
+    let holder = [];
+    for (let i = 0; i < gameObjects.length; i++) {
+        if (!gameObjects[i].canCheckLose) continue;
+        if(gameObjects[i].y <= topBox)
+        {
+            holder.push(gameObjects[i]);
+        }
+    }
+    return holder.length > 0;
+}
+
 
 
 //Utils
@@ -290,7 +338,10 @@ function createDirection(posStart) {
 }
 
 
-
+function showPanelWin()
+{
+    
+}
 
 
 
@@ -310,7 +361,7 @@ function detectedColisionBox() {
             gameObject.x > leftBox && gameObject.x < rightBox
         ) {
             gameObject.vx = Math.abs(gameObject.vx) * 0.5;
-            gameObject.vy = -Math.abs(gameObject.vy) * 0.7;
+            gameObject.vy = -Math.abs(gameObject.vy) *0.7;
             gameObject.y = bottomBox - gameObject.radius;
         }
     });
@@ -332,7 +383,6 @@ function TryMergFruit(obj1, obj2, index2) {
         obj1.updateFruit(fruitData.radius, fruitData.type, fruitData.color);
         gameObjects.splice(index2, 1);
         addPointPlayer(fruitData.point);
-
 
         //Create Partical
         for (let i = 0; i < obj1.radius * 2; i++) {
@@ -379,7 +429,9 @@ document.addEventListener('mouseup', function (event) {
     isDrag = false;
     objDirection = [];
     fruitSpawm.useGravity = true;
+    
     canSpawm = false;
+
 
 });
 
@@ -394,10 +446,10 @@ canvas.addEventListener('mousemove', function (event) {
     if (y >= topBox) {
         y = topBox - fruitSpawm.radius;
     }
-    if (x <= leftBox) {
+    if (x <= leftBox + fruitSpawm.radius) {
         x = leftBox + fruitSpawm.radius;
     }
-    if (x >= rightBox) {
+    if (x >= rightBox - fruitSpawm.radius) {
         x = rightBox - fruitSpawm.radius;
     }
 

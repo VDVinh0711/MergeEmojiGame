@@ -19,9 +19,10 @@ class Fruit extends GameObject {
     constructor(context, x, y, vx, vy, radius, type, color) {
         super(context, x, y, vx, vy);
         this.radius = radius;
-        this.mass = 0.3;
+        this.mass = 70;
         this.type = type;
         this.color = color;
+        this.canCheckLose = false;
     }
 
     draw() {
@@ -52,29 +53,28 @@ class Fruit extends GameObject {
 
     handelGravity(deltatime) {
         if (!this.useGravity) return;
-        this.vy += 100 * deltatime ;
+        this.vy += 9.8 * this.mass * deltatime ;
 
     }
 
+    handelColison()
+    {
+        this.canCheckLose = true;
+        this.isColiding = true;
+    }
     rotate(deltatime) {
         let radians = Math.atan2(this.vy * deltatime, this.vx * deltatime);
         this.angle = (180 * radians / Math.PI);
     }
 
     updateV(speed,massOther, dis) {
-        //     if (speed < 0) {
-        //         return;
-        //     }
-        //    // let impulse = 2 * speed / (this.mass + massOther);
-        //     this.vx += dis * (speed * this.vColisionNor.x);
-        //     this.vy += dis * (speed * this.vColisionNor.y);
-
         if (speed < 0) {
             return;
         }
+   
         let impulse = 2 * speed / (this.mass + massOther);
-        this.vx += dis * (impulse * massOther * this.vColisionNor.x);
-        this.vy += dis * (impulse * massOther * this.vColisionNor.y);
+        this.vx += dis * (speed * this.vColisionNor.x);
+        this.vy += dis * (speed * this.vColisionNor.y);
     }
 
 
