@@ -5,86 +5,6 @@
 
 
 
-const TypeOfFruit =
-{
-    WaterMelon: 'WaterMelon',
-    Banana: 'Banana',
-    Apple: 'Apple',
-    Mango: 'Mango',
-    Pineapple: 'Pineapple',
-    Cherry: 'Cherry',
-}
-
-const FruitDatas =
-{
-    WaterMelon:
-    {
-        type: TypeOfFruit.WaterMelon,
-        color: '#4CAF50',
-        radius: 15,
-        score: 10,
-    },
-    Banana:
-    {
-        type: TypeOfFruit.Banana,
-        color: '#FFEB3B',
-        radius: 20,
-        score: 20,
-    },
-    Apple:
-    {
-        type: TypeOfFruit.Apple,
-        color: '#FF0800',
-        radius: 25,
-        score: 30,
-    },
-    Mango:
-    {
-        type: TypeOfFruit.Mango,
-        color: '#FF8C00',
-        radius: 30,
-        score: 40,
-    },
-    Pineapple:
-    {
-        type: TypeOfFruit.Pineapple,
-        color: '#D4AF37',
-        radius: 35,
-        score: 50,
-    },
-    Cherry:
-    {
-        type: TypeOfFruit.Cherry,
-        color: '#DE3163 ',
-        radius: 40,
-        score: 60,
-    },
-
-}
-const listFruits = [TypeOfFruit.WaterMelon,
-TypeOfFruit.Banana,
-TypeOfFruit.Apple,
-TypeOfFruit.Mango,
-TypeOfFruit.Pineapple,
-TypeOfFruit.Cherry
-]
-
-function GetRamdomTypeFruit() {
-    const randomInex = Math.round(Math.random() * listFruits.length / 2);
-    return listFruits[randomInex];
-
-}
-
-function GetAssetFruit(type) {
-    return Object.values(FruitDatas).find(fruit => fruit.type === type);
-}
-
-function getNextFruit(current) {
-    const curIndex = listFruits.indexOf(current);
-    const nextTypeFruit = listFruits[curIndex + 1];
-    return GetAssetFruit(nextTypeFruit);
-}
-
 
 
 
@@ -114,16 +34,16 @@ let fps = 0;
 let particles = [];
 let userGuide = [];
 let gameObjects = [];
-let objDirection = [];
+let waypoints = [];
 let textScore = [];
 let fruitSpawm;
 //VariableUntil
 let isDrag = false;
 let canSpawm = true;
-const originTimeDelay = 0.5;
-let timeDelaySpawm = 0.5;
-let timeCountDownLose = 4;
-const timeOriginCountDown = 4;
+const spawnTimeDelay = 0.5;
+let currentSpawnDelay = 0.5;
+let loseCountdownTime = 4;
+const initialLoseCountdownTime = 4;
 
 
 //CofigBox
@@ -141,25 +61,26 @@ function Init() {
 
 
     //Create Guid
-    createUserGuild(40, canvas.height - 20);
+    createFormulaGuide(canvas.width - 70,  50);
 
     // Create Config Box
-    rightBox = canvas.width / 2 + 200;
-    leftBox = canvas.width / 2 - 200;
-    bottomBox = canvas.height - 50;
-    topBox = bottomBox - 400;
+    rightBox = canvas.width / 2 + 300;
+    leftBox = canvas.width / 2 - 300;
+    bottomBox = canvas.height - 100;
+    topBox = bottomBox - 500;
     window.requestAnimationFrame(gameLoop);
 }
 
 function ResGame() {
     isWin = false;
     isLose = false;
-    timeDelaySpawm = originTimeDelay;
-    timeCountDownLose = timeOriginCountDown;
+    currentSpawnDelay = spawnTimeDelay;
+    loseCountdownTime = initialLoseCountdownTime;
 
+    console.log(hightScore);
     particles = [];
     gameObjects = [];
-    objDirection = [];
+    waypoints = [];
     playerScore = 0;
 }
 
@@ -188,10 +109,10 @@ function gameUpdate(deltatime) {
 
     //Delay Spawm Fruit
     if (!canSpawm) {
-        timeDelaySpawm -= deltatime;
-        if (timeDelaySpawm <= 0) {
+        currentSpawnDelay -= deltatime;
+        if (currentSpawnDelay <= 0) {
             canSpawm = true;
-            timeDelaySpawm = originTimeDelay;
+            currentSpawnDelay = spawnTimeDelay;
         }
     }
 
@@ -211,7 +132,7 @@ function gameUpdate(deltatime) {
 
 
     //Update TextScore
-    textScore.forEach((element,index) => {
+    textScore.forEach((element, index) => {
         if (element.alpha <= 0) {
             textScore.splice(index, 1)
         } else {
@@ -220,17 +141,17 @@ function gameUpdate(deltatime) {
     });
 
     //Check Lose
-    if (ColiWithBarie()) {
-        timeCountDownLose -= deltatime;
+    if (isCollidingWithBoundary()) {
+        loseCountdownTime -= deltatime;
 
-        if (timeCountDownLose <= 0) {
+        if (loseCountdownTime <= 0) {
             isLose = true;
             console.log("losse")
         }
 
     }
     else {
-        timeCountDownLose = timeOriginCountDown;
+        loseCountdownTime = initialLoseCountdownTime;
     }
 }
 
@@ -238,21 +159,27 @@ function gameUpdate(deltatime) {
 //Draw
 function gameDraw() {
     context.clearRect(0, 0, canvas.width, canvas.height);
-   
 
 
 
+    drawBackGround();
+
+    drawZoneSpawm();
+    drawBox();
+    drawFps();
+    drawPlayerPoint();
+    drawHightScore();
+
+    drawFormulaGuide();
+
+
+  
     //Draw gameObj
     gameObjects.forEach(gameObject => {
         gameObject.draw();
     });
 
-    //Draw Point Direction
-    objDirection.forEach(obj => {
-        obj.draw();
-    });
-
-  
+    drawWayPoints();
 
     //DrawParticels
     particles.forEach(particles => {
@@ -265,13 +192,7 @@ function gameDraw() {
     });
 
 
-    drawZoneSpawm();
-    drawBox();
-    drawFps();
-    drawPlayerPoint();
-    drawHightScore();
     
-    drawUserGuild();
 }
 
 //COlision
@@ -287,7 +208,7 @@ function gameColision() {
         for (let j = gameObjects.length - 1; j >= i + 1; j--) {
             const obj2 = gameObjects[j];
             if (obj1.CheckColision(obj2)) {
-                const isMerge = TryMergFruit(obj1, obj2, j);
+                const isMerge = MergedFruits(obj1, obj2, j);
                 if (!isMerge) {
                     const vRelavityVelocity =
                     {
@@ -308,7 +229,7 @@ function gameColision() {
 }
 
 
-function ColiWithBarie() {
+function isCollidingWithBoundary() {
     let holder = [];
     for (let i = 0; i < gameObjects.length; i++) {
         if (!gameObjects[i].canCheckLose) continue;
@@ -321,24 +242,26 @@ function ColiWithBarie() {
 
 
 
+
+
+
+
 //Instantiate Text Score
-function InstantiaTextScore( posX, posY,score)
-{
-    textScore.push(new TextScore( context,posX,posY,` ${score}`));
+function InstantiateTextScore(posX, posY, score) {
+    textScore.push(new TextScore(context, posX, posY, ` + ${score}`));
 }
 
 //Utils
 
 
-
-//Draw Guid
-function drawUserGuild() {
-    userGuide.forEach(element => {
-        element.draw();
-    });
-}
-
 function drawBox() {
+
+
+    context.beginPath();
+    context.fillStyle = 'white';
+    context.rect(leftBox,topBox,rightBox-leftBox,bottomBox-topBox);
+    context.fill();
+
     context.beginPath();
     context.lineWidth = 10;
     context.strokeStyle = 'black';
@@ -347,6 +270,8 @@ function drawBox() {
     context.lineTo(rightBox, bottomBox);
     context.lineTo(rightBox, topBox);
     context.stroke();
+
+  
 }
 
 function drawZoneSpawm() {
@@ -355,6 +280,15 @@ function drawZoneSpawm() {
     context.strokeStyle = 'red';
     context.rect(leftBox, 0, rightBox - leftBox, topBox);
     context.stroke();
+}
+
+
+function drawBackGround()
+{
+    context.beginPath();
+    context.fillStyle = 'pink';
+    context.rect(0,0,canvas.width,canvas.height);
+    context.fill();
 }
 
 //Draw Fps
@@ -390,7 +324,7 @@ function drawHightScore() {
 
 
 //Create Direction
-function createDirection(posStart) {
+function createWayPoints(posStart) {
     const spaceSize = 30;
     let posBegin =
     {
@@ -399,80 +333,110 @@ function createDirection(posStart) {
     }
     for (let i = 0; i < 5; i++) {
         const newDot = new Dot(context, posBegin.x, posBegin.y);
-        objDirection.push(newDot);
+        waypoints.push(newDot);
         posBegin.y += spaceSize;
     }
 }
 
-//Create GuiD
-function createUserGuild(x, y) {
-
-    const space = 50;
-    listFruits.forEach(fruit => {
-        const assetFruit = GetAssetFruit(fruit);
-        userGuide.push(new Fruit(context, x, y, 0, 0, assetFruit.radius, assetFruit.type, assetFruit.color));
-        x += assetFruit.radius + space;
+function drawWayPoints() {
+    //Draw Point Direction
+    waypoints.forEach(obj => {
+        obj.draw();
     });
+
 }
 
 
 
+//Create GuiD
+function createFormulaGuide(x, y) {
 
-//Merg Obj
-function TryMergFruit(obj1, obj2, index2) {
+    const space = 60;
+    let listDataFruit = GetListFruitDatas();
+    listDataFruit.forEach(fruit => {
+        const assetFruit = GetAssetFruit(fruit);
+        userGuide.push(new Fruit(context, x, y, 0, 0, assetFruit.radius, assetFruit.type, assetFruit.srcIMG));
+        y += assetFruit.radius + space;
+    });
+}
+
+//Draw Guid
+function drawFormulaGuide() {
+    userGuide.forEach(element => {
+        element.draw();
+    });
+}
+
+
+//Merge Obj
+function MergedFruits(obj1, obj2, index2) {
     if (obj1.type == obj2.type) {
-        const fruitData = getNextFruit(obj1.type);
-
+        const nextFruit = getNextFruit(obj1.type);
         //Check Win
-        if (fruitData.type == TypeOfFruit.Cherry) {
+        if (nextFruit.type == GetLastFruit()) {
             upDateHightScore(playerScore);
             isWin = true;
-            console.log(isWin);
         }
+
         //UpdateFruit
-        obj1.updateFruit(fruitData.radius, fruitData.type, fruitData.color);
+        obj1.updateFruit(nextFruit.radius, nextFruit.type, nextFruit.srcIMG);
         gameObjects.splice(index2, 1);
-        addPointPlayer(fruitData.score);
-        InstantiaTextScore(obj1.x,obj1.y - obj1.radius,fruitData.score);
+
+
+        addPointPlayer(nextFruit.score);
+        InstantiateTextScore(obj1.x, obj1.y - obj1.radius, nextFruit.score);
+
+
         //Create Partical
-        for (let i = 0; i < obj1.radius * 2; i++) {
-            particles.push(
-                new Particle(context, obj1.x, obj1.y,
-                    obj1.radius / 6,
-                    obj1.color,
-                    (Math.random() - 0.5) * (Math.random() * 6) * 100,
-                    (Math.random() - 0.5) * (Math.random() * 6) * 100
-                )
-            )
-        }
+        createParticle(obj1.x, obj1.y);
 
         return true;
     }
     return false;
 }
 
+//Check Win
 
-
+function createParticle(posX, posY) {
+    for (let i = 0; i < 50; i++) {
+        particles.push(
+            new Particle(context, posX, posY,
+                Math.floor(Math.random() * (15 - 10 + 1)) + 10,
+                'yellow',
+                (Math.random() - 0.5) * (Math.random() * 6) * 100,
+                (Math.random() - 0.5) * (Math.random() * 6) * 100
+            )
+        )
+    }
+}
 
 //Mouse Event
 
 
+
 //On Mouse Down
 document.addEventListener('mousedown', function (event) {
-    if (isLose || isWin) return;
+
+
+
+    const rect = canvas.getBoundingClientRect();
+    let x = event.clientX - rect.left;
+    let y = event.clientY - rect.top;
+
     if (!canSpawm) return;
-    if (event.y >= topBox) return;
-    isDrag = true;
+    if (y >= topBox) return;
+
 
     //Create Fruit
     const typeFruit = GetRamdomTypeFruit();
     const objFruit = GetAssetFruit(typeFruit);
-    fruitSpawm = new Fruit(context, event.clientX, event.clientY, 0, 0, objFruit.radius, objFruit.type, objFruit.color);
+    fruitSpawm = new Fruit(context, x, y, 0, 0, objFruit.radius, objFruit.type, objFruit.srcIMG);
     fruitSpawm.useGravity = false;
+    console.log(fruitSpawm.type);
     gameObjects.push(fruitSpawm);
-
     //Direction
-    createDirection({ x: event.clientX, y: event.clientY + fruitSpawm.radius });
+    createWayPoints({ x: x, y: y + fruitSpawm.radius });
+    isDrag = true;
 });
 
 
@@ -480,7 +444,7 @@ document.addEventListener('mousedown', function (event) {
 document.addEventListener('mouseup', function (event) {
     if (!fruitSpawm) return;
     isDrag = false;
-    objDirection = [];
+    waypoints = [];
     fruitSpawm.useGravity = true;
 
     canSpawm = false;
@@ -510,8 +474,8 @@ canvas.addEventListener('mousemove', function (event) {
 
     fruitSpawm.x = x;
     fruitSpawm.y = y;
-    objDirection = [];
-    createDirection({ x: x, y: y + fruitSpawm.radius });
+    waypoints = [];
+    createWayPoints({ x: x, y: y + fruitSpawm.radius });
 
 });
 
@@ -524,8 +488,9 @@ function addPointPlayer(score) {
 }
 
 function upDateHightScore(score) {
-    if (score < hightScore) {
+    if (score > hightScore) {
         hightScore = score;
+        
     }
 }
 
@@ -538,18 +503,18 @@ function detectedColisionBox() {
     gameObjects.forEach(gameObject => {
 
         if (gameObject.x < leftBox + gameObject.radius) {
-            gameObject.vx = Math.abs(gameObject.vx) * 0.9;
+            gameObject.vx = Math.abs(gameObject.vx) * 0.5;
             gameObject.x = leftBox + gameObject.radius;
         }
         else if (gameObject.x + gameObject.radius >= rightBox) {
-            gameObject.vx = -Math.abs(gameObject.vx) * 0.9;
+            gameObject.vx = -Math.abs(gameObject.vx) * 0.5;
             gameObject.x = rightBox - gameObject.radius;
         }
 
         if (gameObject.y + gameObject.radius >= bottomBox &&
             gameObject.x > leftBox && gameObject.x < rightBox
         ) {
-            gameObject.vx = Math.abs(gameObject.vx) * 0.5;
+
             gameObject.vy = -Math.abs(gameObject.vy) * 0.7;
             gameObject.y = bottomBox - gameObject.radius;
         }
