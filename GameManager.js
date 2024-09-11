@@ -1,4 +1,8 @@
-
+import { Dot } from './Classes/Dot.js';
+import EmojiDatas from './EmojiDataManager.js';
+import { Particle } from './Classes/Particle.js';
+import { TextScore } from './Classes/TextScore.js'
+import { Emoji } from './Classes/Emoji.js';
 
 "use-strict"
 
@@ -23,12 +27,13 @@ let btn_res = document.getElementById("btn_resGame");
 let playerScore = 0;
 let isWin = false;
 let isLose = false;
-let hightScore = 0;
+let bestTime = 0;
 
 //ConfigGame
 let secondsPassed = 0; // aka delta time
 let oldTimeStamp = 0;
 let fps = 0;
+let timeManager = 0;
 
 //Helper
 let particles = [];
@@ -36,7 +41,7 @@ let userGuide = [];
 let gameObjects = [];
 let waypoints = [];
 let textScore = [];
-let fruitSpawm;
+let newEmoji;
 //VariableUntil
 let isDrag = false;
 let canSpawm = true;
@@ -60,14 +65,18 @@ function Init() {
     context = canvas.getContext('2d');
 
 
+
     //Create Guid
-    createFormulaGuide(canvas.width - 70,  50);
+    createFormulaGuide(canvas.width - 70, 50);
 
     // Create Config Box
     rightBox = canvas.width / 2 + 300;
     leftBox = canvas.width / 2 - 300;
     bottomBox = canvas.height - 100;
     topBox = bottomBox - 500;
+
+
+    testSpawm();
     window.requestAnimationFrame(gameLoop);
 }
 
@@ -77,7 +86,7 @@ function ResGame() {
     currentSpawnDelay = spawnTimeDelay;
     loseCountdownTime = initialLoseCountdownTime;
 
-    console.log(hightScore);
+    timeManager = 0;
     particles = [];
     gameObjects = [];
     waypoints = [];
@@ -86,12 +95,12 @@ function ResGame() {
 
 //Main Loop
 function gameLoop(timeStamp) {
-
-
     secondsPassed = (timeStamp - oldTimeStamp) / 1000;
     secondsPassed = Math.min(secondsPassed, 0.1);
     fps = Math.round(1 / secondsPassed);
     oldTimeStamp = timeStamp;
+
+    timeManager = Math.round((timeManager + secondsPassed) * 100) / 100
 
     if (!isLose && !isWin) {
         gameUpdate(secondsPassed);
@@ -107,7 +116,7 @@ function gameLoop(timeStamp) {
 //Update
 function gameUpdate(deltatime) {
 
-    //Delay Spawm Fruit
+    //Delay Spawm Emoji
     if (!canSpawm) {
         currentSpawnDelay -= deltatime;
         if (currentSpawnDelay <= 0) {
@@ -116,19 +125,24 @@ function gameUpdate(deltatime) {
         }
     }
 
+
+    for(let i = 0 ;i< gameObjects.length ;i++)
+    {
+        if(gameObjects[i].canMerge) continue;
+        gameObjects[i].updateCanMerge(topBox);
+        
+    }
+   
     // Update Obj
     gameObjects.forEach(gameObject => {
         gameObject.update(deltatime)
     });
 
-    // Update Partcles
-    particles.forEach((particle, index) => {
-        if (particle.alpha <= 0) {
-            particles.splice(index, 1)
-        } else {
-            particle.update(deltatime)
-        }
-    })
+   
+
+
+
+    Particle.updateListParticles(deltatime);
 
 
     //Update TextScore
@@ -164,6 +178,7 @@ function gameDraw() {
 
     drawBackGround();
 
+    drawTime();
     drawZoneSpawm();
     drawBox();
     drawFps();
@@ -173,7 +188,7 @@ function gameDraw() {
     drawFormulaGuide();
 
 
-  
+
     //Draw gameObj
     gameObjects.forEach(gameObject => {
         gameObject.draw();
@@ -181,10 +196,8 @@ function gameDraw() {
 
     drawWayPoints();
 
-    //DrawParticels
-    particles.forEach(particles => {
-        particles.draw();
-    });
+    //DrawParticle
+    Particle.drawListParticles();
 
     //Draw Score
     textScore.forEach(element => {
@@ -192,7 +205,7 @@ function gameDraw() {
     });
 
 
-    
+
 }
 
 //COlision
@@ -208,18 +221,11 @@ function gameColision() {
         for (let j = gameObjects.length - 1; j >= i + 1; j--) {
             const obj2 = gameObjects[j];
             if (obj1.CheckColision(obj2)) {
-                const isMerge = MergedFruits(obj1, obj2, j);
+                const isMerge = MergedEmojis(obj1, obj2, j);
                 if (!isMerge) {
-                    const vRelavityVelocity =
-                    {
-                        x: obj1.vx - obj2.vx,
-                        y: obj1.vy - obj2.vy
-                    }
-                    let speed = obj1.vColisionNor.x * vRelavityVelocity.x + obj1.vColisionNor.y * vRelavityVelocity.y;
-                    obj1.updateV(speed, obj2.mass, -1);
-                    obj2.updateV(speed, obj1.mass, 1);
-                    obj1.handelColison();
-                    obj2.handelColison();
+                    resolveCollision(obj1,obj2);
+                    obj1.handleColison();
+                    obj2.handleColison();
                 }
             }
         }
@@ -242,6 +248,34 @@ function isCollidingWithBoundary() {
 
 
 
+function resolveCollision(obj1, obj2) {
+    const dx = obj2.x - obj1.x;
+    const dy = obj2.y - obj1.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const overlap = (obj1.radius + obj2.radius) - distance;
+    
+    if (overlap > 0) {
+        // Di chuyển các đối tượng ra khỏi nhau
+        const moveX = (overlap * dx) / distance / 2;
+        const moveY = (overlap * dy) / distance / 2;
+        
+        obj1.x -= moveX;
+        obj1.y -= moveY;
+        obj2.x += moveX;
+        obj2.y += moveY;
+        
+        // Tính toán vận tốc mới
+        const nx = dx / distance;
+        const ny = dy / distance;
+        const p = 2 * (nx * (obj2.vx - obj1.vx) + ny * (obj2.vy - obj1.vy)) / (obj1.mass + obj2.mass);
+        
+        obj1.vx += p * obj2.mass * nx;
+        obj1.vy += p * obj2.mass * ny;
+        obj2.vx -= p * obj1.mass * nx;
+        obj2.vy -= p * obj1.mass * ny;
+    }
+}
+
 
 
 
@@ -254,12 +288,22 @@ function InstantiateTextScore(posX, posY, score) {
 //Utils
 
 
+
+function drawTime() {
+    context.beginPath();
+    context.fillStyle = 'black';
+    context.fillText(`Time Game : ${timeManager}`, 0, 110);
+    context.font = '20px Arial';
+    context.textAlign = 'left';
+    context.textBaseline = 'top';
+}
+
 function drawBox() {
 
 
     context.beginPath();
     context.fillStyle = 'white';
-    context.rect(leftBox,topBox,rightBox-leftBox,bottomBox-topBox);
+    context.rect(leftBox, topBox, rightBox - leftBox, bottomBox - topBox);
     context.fill();
 
     context.beginPath();
@@ -271,7 +315,7 @@ function drawBox() {
     context.lineTo(rightBox, topBox);
     context.stroke();
 
-  
+
 }
 
 function drawZoneSpawm() {
@@ -283,11 +327,10 @@ function drawZoneSpawm() {
 }
 
 
-function drawBackGround()
-{
+function drawBackGround() {
     context.beginPath();
     context.fillStyle = 'pink';
-    context.rect(0,0,canvas.width,canvas.height);
+    context.rect(0, 0, canvas.width, canvas.height);
     context.fill();
 }
 
@@ -316,7 +359,7 @@ function drawPlayerPoint() {
 function drawHightScore() {
     context.beginPath();
     context.fillStyle = 'black';
-    context.fillText(`Hight Score : ${hightScore}`, 0, 80);
+    context.fillText(`Hight Score : ${bestTime}`, 0, 80);
     context.font = '20px Arial';
     context.textAlign = 'left';
     context.textBaseline = 'top';
@@ -352,11 +395,11 @@ function drawWayPoints() {
 function createFormulaGuide(x, y) {
 
     const space = 60;
-    let listDataFruit = GetListFruitDatas();
-    listDataFruit.forEach(fruit => {
-        const assetFruit = GetAssetFruit(fruit);
-        userGuide.push(new Fruit(context, x, y, 0, 0, assetFruit.radius, assetFruit.type, assetFruit.srcIMG));
-        y += assetFruit.radius + space;
+    let listDataEmojis = EmojiDatas.GetListEmojiDatas();
+    listDataEmojis.forEach(emoji => {
+        const assetEmoji = EmojiDatas.GetAssetEmoji(emoji);
+        userGuide.push(new Emoji(context, x, y, 0, 0, assetEmoji.radius, assetEmoji.type, assetEmoji.srcIMG));
+        y += assetEmoji.radius + space;
     });
 }
 
@@ -369,26 +412,27 @@ function drawFormulaGuide() {
 
 
 //Merge Obj
-function MergedFruits(obj1, obj2, index2) {
-    if (obj1.type == obj2.type) {
-        const nextFruit = getNextFruit(obj1.type);
+function MergedEmojis(obj1, obj2, index2) {
+    if (obj1.type == obj2.type && obj1.canMerge && obj2.canMerge) {
+        const nextEmoji = EmojiDatas.getNextEmoji(obj1.type);
         //Check Win
-        if (nextFruit.type == GetLastFruit()) {
-            upDateHightScore(playerScore);
+        if (nextEmoji.type == EmojiDatas.GetLastEmoji()) {
+            upDateBestTime(timeManager);
             isWin = true;
         }
 
-        //UpdateFruit
-        obj1.updateFruit(nextFruit.radius, nextFruit.type, nextFruit.srcIMG);
+        //UpdateEmoji
+        obj1.updateModelEmoji(nextEmoji.radius, nextEmoji.type, nextEmoji.srcIMG);
         gameObjects.splice(index2, 1);
 
 
-        addPointPlayer(nextFruit.score);
-        InstantiateTextScore(obj1.x, obj1.y - obj1.radius, nextFruit.score);
+        addPointPlayer(nextEmoji.score);
+        InstantiateTextScore(obj1.x, obj1.y - obj1.radius, nextEmoji.score);
 
 
         //Create Partical
-        createParticle(obj1.x, obj1.y);
+      
+        Particle.createParticels(context,obj1.x,obj1.y);
 
         return true;
     }
@@ -397,89 +441,66 @@ function MergedFruits(obj1, obj2, index2) {
 
 //Check Win
 
-function createParticle(posX, posY) {
-    for (let i = 0; i < 50; i++) {
-        particles.push(
-            new Particle(context, posX, posY,
-                Math.floor(Math.random() * (15 - 10 + 1)) + 10,
-                'yellow',
-                (Math.random() - 0.5) * (Math.random() * 6) * 100,
-                (Math.random() - 0.5) * (Math.random() * 6) * 100
-            )
-        )
-    }
-}
-
 //Mouse Event
 
 
 
 //On Mouse Down
 document.addEventListener('mousedown', function (event) {
-
-
-
     const rect = canvas.getBoundingClientRect();
     let x = event.clientX - rect.left;
     let y = event.clientY - rect.top;
 
+
     if (!canSpawm) return;
     if (y >= topBox) return;
+    console.log("click");
 
-
-    //Create Fruit
-    const typeFruit = GetRamdomTypeFruit();
-    const objFruit = GetAssetFruit(typeFruit);
-    fruitSpawm = new Fruit(context, x, y, 0, 0, objFruit.radius, objFruit.type, objFruit.srcIMG);
-    fruitSpawm.useGravity = false;
-    console.log(fruitSpawm.type);
-    gameObjects.push(fruitSpawm);
+    //Create Emoji
+    const emojiType = EmojiDatas.GetRandomTypeEmoji();
+    const assetEmoji = EmojiDatas.GetAssetEmoji(emojiType);
+    newEmoji = new Emoji(context, x, y, 0, 0, assetEmoji.radius, assetEmoji.type, assetEmoji.srcIMG);
+    newEmoji.useGravity = false;
+    gameObjects.push(newEmoji);
     //Direction
-    createWayPoints({ x: x, y: y + fruitSpawm.radius });
+    createWayPoints({ x: x, y: y + newEmoji.radius });
     isDrag = true;
 });
 
 
 //On Mouse Up
 document.addEventListener('mouseup', function (event) {
-    if (!fruitSpawm) return;
+    if (!newEmoji) return;
     isDrag = false;
     waypoints = [];
-    fruitSpawm.useGravity = true;
-
+    newEmoji.useGravity = true;
     canSpawm = false;
-
-
 });
 
 
 //On Mouse Drag
 canvas.addEventListener('mousemove', function (event) {
-
-
     if (!isDrag) return;
     const rect = canvas.getBoundingClientRect();
     let x = event.clientX - rect.left;
     let y = event.clientY - rect.top;
 
     if (y >= topBox) {
-        y = topBox - fruitSpawm.radius;
+        y = topBox - newEmoji.radius;
     }
-    if (x <= leftBox + fruitSpawm.radius) {
-        x = leftBox + fruitSpawm.radius;
+    if (x <= leftBox + newEmoji.radius) {
+        x = leftBox + newEmoji.radius;
     }
-    if (x >= rightBox - fruitSpawm.radius) {
-        x = rightBox - fruitSpawm.radius;
+    if (x >= rightBox - newEmoji.radius) {
+        x = rightBox - newEmoji.radius;
     }
 
-    fruitSpawm.x = x;
-    fruitSpawm.y = y;
+    newEmoji.x = x;
+    newEmoji.y = y;
     waypoints = [];
-    createWayPoints({ x: x, y: y + fruitSpawm.radius });
+    createWayPoints({ x: x, y: y + newEmoji.radius });
 
 });
-
-
 
 
 // SomeThing 
@@ -487,11 +508,14 @@ function addPointPlayer(score) {
     playerScore += score;
 }
 
-function upDateHightScore(score) {
-    if (score > hightScore) {
-        hightScore = score;
-        
+function upDateBestTime(time) {
+    if (time < bestTime) {
+        bestTime = time;
     }
+    if (bestTime == 0) {
+        bestTime = time;
+    }
+
 }
 
 btn_res.addEventListener('click', function () {
@@ -501,7 +525,6 @@ btn_res.addEventListener('click', function () {
 
 function detectedColisionBox() {
     gameObjects.forEach(gameObject => {
-
         if (gameObject.x < leftBox + gameObject.radius) {
             gameObject.vx = Math.abs(gameObject.vx) * 0.5;
             gameObject.x = leftBox + gameObject.radius;
@@ -514,10 +537,27 @@ function detectedColisionBox() {
         if (gameObject.y + gameObject.radius >= bottomBox &&
             gameObject.x > leftBox && gameObject.x < rightBox
         ) {
-
-            gameObject.vy = -Math.abs(gameObject.vy) * 0.7;
+            gameObject.vy = -Math.abs(gameObject.vy) * 0.5;
+            gameObject.vx *= 0.95; // Thêm ma sát
             gameObject.y = bottomBox - gameObject.radius;
         }
     });
 }
 
+
+
+
+
+function testSpawm() {
+    let min = leftBox;
+    let max = rightBox;
+    for (let i = 0; i < 1; i++) {
+        let x = Math.floor(Math.random() * (max - min + 1)) + min;
+        let y = Math.floor(Math.random() * (topBox - 0 + 1)) + 0;
+        const emojiType = EmojiDatas.GetRandomTypeEmoji();
+        const assetEmoji = EmojiDatas.GetAssetEmoji(emojiType);
+        newEmoji = new Emoji(context, x, y, 0, 0, assetEmoji.radius, assetEmoji.type, assetEmoji.srcIMG);
+        newEmoji.useGravity = true;
+        gameObjects.push(newEmoji);
+    }
+}
