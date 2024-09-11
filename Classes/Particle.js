@@ -9,6 +9,8 @@ export class Particle {
         this.vy = vy;
         this.alpha = 1
         this.context = context;
+        // console.log(this.x);
+        // console.log(this.y);
     }
 
     draw() {
@@ -22,38 +24,10 @@ export class Particle {
     }
 
     update(deltatime) {
+        
         this.x += this.vx * deltatime;
         this.y += this.vy * deltatime;
+       
         this.alpha -= 0.02;
-
-    }
-
-
-    static createParticels(context, posX, posY) {
-        for (let i = 0; i < 50; i++) {
-            Particle.listParticles.push(
-                new Particle(context, posX, posY,
-                    Math.floor(Math.random() * (15 - 10 + 1)) + 10,
-                    'yellow',
-                    (Math.random() - 0.5) * (Math.random() * 6) * 100,
-                    (Math.random() - 0.5) * (Math.random() * 6) * 100
-                )
-            )
-        }
-    }
-    static drawListParticles() {
-        Particle.listParticles.forEach(particle => {
-            particle.draw();
-        }
-        )
-    }
-    static updateListParticles(deltatime) {
-        Particle.listParticles.forEach((particle, index) => {
-            if (particle.alpha <= 0) {
-                Particle.listParticles.splice(index, 1)
-            } else {
-                particle.update(deltatime)
-            }
-        });
     }
 }

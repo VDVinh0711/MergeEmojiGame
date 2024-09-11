@@ -1,10 +1,13 @@
-import { Dot } from './Classes/Dot.js';
-import EmojiDatas from './EmojiDataManager.js';
-import { Particle } from './Classes/Particle.js';
-import { TextScore } from './Classes/TextScore.js'
-import { Emoji } from './Classes/Emoji.js';
+import { Dot } from '../Classes/Dot.js';
+import EmojiDatas from '../EmojiDataManager.js';
+import { Particle } from '../Classes/Particle.js';
+import { TextScore } from '../Classes/TextScore.js'
+import { Emoji } from '../Classes/Emoji.js';
+import {GameRenderer} from './GameRenderer.js';
+import {GameManager} from '../GameMangerv2.js';
 
 "use-strict"
+
 
 
 
@@ -35,6 +38,7 @@ let oldTimeStamp = 0;
 let fps = 0;
 let timeManager = 0;
 
+let gameRenderer;
 //Helper
 let particles = [];
 let userGuide = [];
@@ -58,6 +62,20 @@ let bottomBox;
 let topBox;
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //Game Awake
 window.onload = Init();
 function Init() {
@@ -75,11 +93,12 @@ function Init() {
     bottomBox = canvas.height - 100;
     topBox = bottomBox - 500;
 
-
+    gameRenderer = new GameRenderer(context,canvas);
     testSpawm();
     window.requestAnimationFrame(gameLoop);
 }
 
+//ResGame
 function ResGame() {
     isWin = false;
     isLose = false;
@@ -176,7 +195,9 @@ function gameDraw() {
 
 
 
-    drawBackGround();
+    //drawBackGround();
+
+   // gameRenderer.render();
 
     drawTime();
     drawZoneSpawm();
@@ -338,10 +359,10 @@ function drawBackGround() {
 function drawFps() {
     context.beginPath();
     context.fillStyle = 'black';
-    context.fillText(`FPS:${fps}`, 0, 0);
-    context.font = '20px Arial';
+    context.font = '40px Arial';
     context.textAlign = 'left';
     context.textBaseline = 'top';
+    context.fillText(`FPS:${fps}`, 0, 0);
 }
 
 //Draw Player Point
