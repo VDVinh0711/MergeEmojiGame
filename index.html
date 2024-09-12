@@ -7,17 +7,26 @@
     <title>FruitGame</title>
 
     <style>
-        canvas
-        {
-            border: 2px solid black;
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f1d883; /* Optional: adds a light gray background */
+        }
+        canvas {
+            border: 5px solid black;
             user-select: none;
+            border-radius: 5%; /* Adds rounded corners, adjust as needed */
+            box-shadow: 0 0 10px rgba(0,0,0,0.1); /* Optional: adds a subtle shadow */
         }
     </style>
 </head>
 
 <body>
-    <canvas  id="mainview" width="1000" height="1000"></canvas>
-    <button id="btn_resGame">Restart Game</button>
+    <!-- <img src="./Asset/Background/BackMainMenu.jpg"> -->
+    <canvas  id="mainview" width="600" height="1000"></canvas>
     <!-- <script  type="module" src="./GameManager.js"></script> -->
     <script type="module" src="./main.js"></script>
 </body>

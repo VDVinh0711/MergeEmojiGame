@@ -1,19 +1,27 @@
-export class Particle {
-    static listParticles = [];
-    constructor(context, x, y, radius, color, vx, vy) {
+import { GameObject } from "./GameObject.js";
+export class Particle extends GameObject {
+    constructor() {
+        super()
+        this.radius = 0;
+        this.color = null;
+        this.alpha = 1;
+    }
+
+    init(context,x,y,radius,color,vx,vy)
+    {
+        super.init(context,x,y,vx,vy);
         this.x = x
         this.y = y
         this.radius = radius
         this.color = color
         this.vx = vx;
         this.vy = vy;
-        this.alpha = 1
         this.context = context;
-        // console.log(this.x);
-        // console.log(this.y);
+        this.alpha = 1;
     }
 
     draw() {
+        if(!this.isActive) return;
         this.context.save()
         this.context.globalAlpha = this.alpha
         this.context.beginPath()
@@ -24,10 +32,13 @@ export class Particle {
     }
 
     update(deltatime) {
-        
+        if(!this.isActive) return;
         this.x += this.vx * deltatime;
         this.y += this.vy * deltatime;
-       
         this.alpha -= 0.02;
+        if(this.alpha< 0)
+        {
+            this.isActive = false;
+        }
     }
 }

@@ -13,13 +13,13 @@ export class GameRenderer {
         this.drawFps();
         this.drawBackground();
         this.drawZoneSpawm();
-        this.drawFps();
+       // this.drawFps();
         this.drawBox();
         this.drawGameObject();
         this.drawParticles();
         this.drawWayPoint();
         this.drawTextScores();
-        this.drawPlayerPoint();
+        this.drawPlayerScore();
         this.drawBestTimePlayer();
         this.drawTimeInGame();
         this.drawUserGuide();
@@ -39,51 +39,76 @@ export class GameRenderer {
     }
     drawBackground() {
         this.context.beginPath();
-        this.context.fillStyle = 'pink';
-        this.context.rect(0, 0, this.canvas.width, this.canvas.height);
-        this.context.fill();
+        let sprite = new Image();
+        sprite.src = './Asset/Background/ingame.jpg';
+
+        this.context.imageSmoothingEnabled = true;
+        this.context.imageSmoothingQuality = 'high';
+        this.context.beginPath();
+        this.context.drawImage(sprite,0,0,this.canvas.width,this.canvas.height);
+        // this.context.fillStyle = 'pink';
+        // this.context.rect(0, 0, this.canvas.width, this.canvas.height);
+        // this.context.fill();
     }
 
     drawZoneSpawm() {
         this.context.beginPath();
-        this.context.lineWidth = 2;
+        this.context.lineWidth = 20;
         this.context.strokeStyle = 'red';
-        this.context.rect(this.gammanager.leftBox, 0, this.gammanager.rightBox - this.gammanager.leftBox, this.gammanager.topBox);
-        this.context.stroke();
-    }
-
-    drawBox() {
-        this.context.beginPath();
-        this.context.fillStyle = 'white';
-        this.context.rect(this.gammanager.leftBox, this.gammanager.topBox, this.gammanager.rightBox - this.gammanager.leftBox, this.gammanager.bottomBox - this.gammanager.topBox);
-        this.context.fill();
-
-        this.context.beginPath();
-        this.context.lineWidth = 10;
-        this.context.strokeStyle = 'black';
-        this.context.moveTo(this.gammanager.leftBox, this.gammanager.topBox);
-        this.context.lineTo(this.gammanager.leftBox, this.gammanager.bottomBox);
-        this.context.lineTo(this.gammanager.rightBox, this.gammanager.bottomBox);
+      //  this.context.rect(this.gammanager.leftBox, 0, this.gammanager.rightBox - this.gammanager.leftBox, this.gammanager.topBox);
+        this.context.moveTo(this.gammanager.leftBox,this.gammanager.topBox);
         this.context.lineTo(this.gammanager.rightBox, this.gammanager.topBox);
         this.context.stroke();
     }
 
+    drawBox() {
 
 
-    drawPlayerPoint() {
+
+
+       
+
+
+
+        // this.context.beginPath();
+        // this.context.fillStyle = 'white';
+        // this.context.rect(this.gammanager.leftBox, this.gammanager.topBox, this.gammanager.rightBox - this.gammanager.leftBox, this.gammanager.bottomBox - this.gammanager.topBox);
+        // this.context.fill();
+
+
+        let sprite = new Image();
+        sprite.src = './Asset/Background/boxv2.jpg';
+
+        this.context.imageSmoothingEnabled = true;
+        this.context.imageSmoothingQuality = 'high';
+        this.context.beginPath();
+        this.context.drawImage(sprite,this.gammanager.leftBox, this.gammanager.topBox, this.gammanager.rightBox - this.gammanager.leftBox, this.gammanager.bottomBox - this.gammanager.topBox);
+
+
+        this.context.beginPath();
+        this.context.lineWidth = 10;
+        this.context.strokeStyle = 'black';
+        this.context.moveTo(this.gammanager.leftBox, this.gammanager.bottomBox);
+        this.context.lineTo(this.gammanager.rightBox, this.gammanager.bottomBox);
+        this.context.stroke();
+    }
+
+
+
+    drawPlayerScore() {
         this.context.beginPath();
         this.context.fillStyle = 'black';
-        this.context.font = '20px Arial';
+        this.context.font = 'bold 21px Tahoma';
         this.context.textAlign = 'left';
         this.context.textBaseline = 'top';
-        this.context.fillText(`Score : ${this.gammanager.playerScore}`, 0, 50);
+        this.context.fillText(`Score : ${this.gammanager.playerScore}`, 20, 40);
     }
 
     drawBestTimePlayer() {
         this.context.beginPath();
         this.context.fillStyle = 'black';
-        this.context.fillText(`Best Time : ${this.gammanager.bestTime}`, 0, 80);
-        this.context.font = '20px Arial';
+        this.context.fillText(`Best Time : ${this.gammanager.bestTime}`, 20, 10);
+        this.context.font = 'bold 21px Tahoma';
         this.context.textAlign = 'left';
         this.context.textBaseline = 'top';
     }
@@ -91,10 +116,10 @@ export class GameRenderer {
     drawTimeInGame() {
         this.context.beginPath();
         this.context.fillStyle = 'black';
-        this.context.font = '20px Arial';
+        this.context.font = 'bold 24px Tahoma';
         this.context.textAlign = 'left';
         this.context.textBaseline = 'top';
-        this.context.fillText(`Clock : ${this, this.gammanager.timeInGame}`, 0, 110);
+        this.context.fillText(`Time : ${this, this.gammanager.timeInGame}`, this.canvas.width/2-100, 10);
     }
 
 
@@ -102,19 +127,23 @@ export class GameRenderer {
     drawUserGuide() {
         this.gammanager.userGuide.forEach(element => {
             element.draw();
+           
         });
     }
     drawGameObject() {
-        this.gammanager.gameObjects.forEach(gameObject => {
-            gameObject.draw();
-        });
+        // this.gammanager.gameObjects.forEach(gameObject => {
+        //     gameObject.draw();
+        // });
+
+        this.gammanager.poolingEmojis.activeObjs.forEach(gameobj => {
+            gameobj.draw();
+        }
+        )
 
     }
 
     drawParticles() {
-        this.gammanager.listParticles.forEach(particle => {
-            particle.draw();
-        });
+        this.gammanager.poolingParticles.draw();
     }
 
     drawWayPoint() {
@@ -125,10 +154,7 @@ export class GameRenderer {
     }
 
     drawTextScores() {
-        this.gammanager.textScores.forEach(textScore => {
-            textScore.draw();
-        }
-        )
+        this.gammanager.poolingTextScore.draw();
     }
 
 

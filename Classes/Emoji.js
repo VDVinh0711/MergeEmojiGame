@@ -1,68 +1,81 @@
 
 
-//Main GameObject
-class GameObject {
-    constructor(context, x, y, vx, vy) {
-        this.context = context;
-        this.x = x;
-        this.y = y;
-        this.vx = vx;
-        this.vy = vy;
-        this.isColiding = false;
-        this.useGravity = true;
-    }
-}
+import { GameObject } from "./GameObject.js";
+
+// //Main GameObject
+// class GameObject {
+//     constructor(context, x, y, vx, vy) {
+//         this.context = null;
+//         this.x = 0;
+//         this.y = 0;
+//         this.vx = 0;
+//         this.vy = 0;
+//         this.isColiding = false;
+//         this.useGravity = true;
+//         this.isLife = false;
+//     }
+
+//     init(context, x, y, vx, vy)
+//     {
+//         this.context = context;
+//         this.x = x;
+//         this.y = y;
+//         this.vx = vx;
+//         this.vy = vy;
+//         this.isLife = true;
+//     }
+
+//     isActive()
+//     {
+//         return this.isLife;
+//     }
+// }
 
 
 //Fruit
 export class Emoji extends GameObject {
-    constructor(context, x, y, vx, vy, radius, type, srcIMG) {
-        super(context, x, y, vx, vy);
-        this.radius = radius;
-        this.mass = 70;
-        this.type = type;
-        this.srcIMG = srcIMG;
+    // constructor(context, x, y, vx, vy, radius, type, srcIMG) {
+    //     super(context, x, y, vx, vy);
+    //     this.radius = radius;
+    //     this.mass = 70;
+    //     this.type = type;
+    //     this.canCheckLose = false;
+    //     this.canMerge = false;
+    //     this.sprite = new Image();
+    //     this.sprite.onload = () => {}// Do something if you need handle logic when load imgage
+    //     this.sprite.src = srcIMG;
+    //     this.angle = -90;
+    // }
+
+
+    constructor()
+    {
+        super();
         this.canCheckLose = false;
         this.canMerge = false;
         this.sprite = new Image();
-        this.sprite.onload = () => {
-        }
-        this.sprite.src = this.srcIMG;
+        this.sprite.src  = '';
         this.angle = -90;
+        this.radius = 0;
+        this.mass = 0;
+        this.type = null;
     }
 
+    init(context, x, y, vx, vy, radius, type, srcIMG)
+    {
+        super.init(context,x,y,vx,vy);
+        this.radius = radius;
+        this.type = type;
+        this.mass = 70;
+        this.sprite.src = srcIMG;
+        this.canCheckLose = false;
+        this.canMerge = false;
+    }
     draw() {
 
-
-        // this.context.beginPath();
-        // this.context.lineWidth = 2;
-        // this.context.strokeStyle = this.color;
-        // this.context.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        // this.context.stroke();
-
-
-        // const scale = Math.min(this.radius * 2 / this.sprite.width,
-        //     this.radius * 2 / this.sprite.height);
-
-        // const scaledWidth = this.sprite.width * scale;
-        // const scaledHeight = this.sprite.height * scale;
-
-        // this.context.imageSmoothingEnabled = true;
-        // this.context.imageSmoothingQuality = 'high';
-
-
-
-
-
-        // // Vẽ ảnh
-        // const x = this.x - scaledWidth / 2;
-        // const y = this.y - scaledHeight / 2;
-        // this.context.drawImage(this.sprite, x, y, scaledWidth, scaledHeight);
+        //if(!this.isActive) return;
         this.context.save();
         this.context.beginPath();
-
-
-
         // this.context.beginPath();
         // this.context.lineWidth = 2;
         // this.context.strokeStyle = 'red';
@@ -70,9 +83,16 @@ export class Emoji extends GameObject {
         // this.context.stroke();
 
 
+
+        
+
         this.context.translate(this.x, this.y);
         this.context.rotate(Math.PI / 180 * (this.angle + 90));
         this.context.translate(-this.x, -this.y);
+
+
+        this.context.imageSmoothingEnabled = true;
+        this.context.imageSmoothingQuality = 'high';
 
         this.context.drawImage(this.sprite,
             this.x - this.radius,
@@ -90,13 +110,14 @@ export class Emoji extends GameObject {
         this.sprite.src = srcIMG;
     }
 
-    updateCanMerge(topBox) {
-        if (this.y > topBox) {
+    updateState(topBox) {
+        if (this.y + this.radius/2  > topBox) {
             this.canMerge = true;
             this.canCheckLose = true;
         }
     }
     update(deltatime) {
+        //if(!this.isActive) return;
         this.x += this.vx * deltatime;
         this.y += this.vy * deltatime;
         this.handleGravity(deltatime);
@@ -110,9 +131,9 @@ export class Emoji extends GameObject {
 
     handleColison() {
         this.isColiding = true;
+       // this.canCheckLose = true;
     }
     rotate(deltatime) {
-
         let targetAngle = Math.atan2(this.vy, this.vx) * 180 / Math.PI;
         targetAngle = (targetAngle + 360) % 360;
         let angleDiff = targetAngle - this.angle;
@@ -133,6 +154,7 @@ export class Emoji extends GameObject {
         let len = this.radius + other.radius;
         return distance <= len;
     }
+   
 
 
 }

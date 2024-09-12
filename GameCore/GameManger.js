@@ -6,13 +6,20 @@ import { TextScore } from '../Classes/TextScore.js';
 import { Dot } from '../Classes/Dot.js';
 import { Emoji } from '../Classes/Emoji.js';
 
+import { ObjectPooling } from '../DesignPattern/ObjectPooling.js';
+import { UIManager } from '../UI/UIManager.js';
+
 export class GameManager {
-    constructor() {
+    constructor(uimanager) {
         this.canvas = document.getElementById("mainview");
         this.context = this.canvas.getContext('2d');
 
-        this.gameObjects = [];
-        this.textScores = [];
+        
+
+        //ref
+        this.uimanager = uimanager;
+
+        //this.textScores = [];
         this.isWin = false;
         this.isLose = false;
 
@@ -24,7 +31,7 @@ export class GameManager {
         //Utils
         this.wayPoints = []
         this.userGuide = [];
-        this.listParticles = []
+ 
 
 
         this.loseCountdownTime = 4;
@@ -44,14 +51,30 @@ export class GameManager {
 
         this.inputHandler = new InputHandler(this.canvas, this.context);
         this.renderer = new GameRenderer(this);
-        this.Init();
+        this.poolingParticles = new ObjectPooling(this.context, Particle, 100);
+        this.poolingEmojis = new ObjectPooling(this.context,Emoji,100);
+        this.poolingTextScore = new ObjectPooling(this.context,TextScore,50);
 
+        this.isGameActive = true;
+        this.isPause = false;
+
+        this.onActionWin = null;
+        this.onActionLose = null;
+        this.Init();
+    }
+
+
+   
+    addUIManger(uiManager)
+    {
+        this.uimanager = uiManager;
     }
 
     Init() {
+
         this.setParamsForBox();
         this.setupEventListeners();
-        this.createFormulaGuide(this.canvas.width - 70, 50)
+        this.createFormulaGuide(this.leftBox+ 50, this.canvas.height-100)
     }
 
     setupEventListeners() {
@@ -64,21 +87,27 @@ export class GameManager {
         this.isWin = false;
         this.isLose = false;
         this.playerScore = 0;
-        this.bestTime = 0;
-        this.inputHandler.Reset();
+        this.isGameActive = true;
+        this.isPause = false;
 
+
+        this.poolingEmojis.reset();
+        this.poolingParticles.reset();
+        this.poolingTextScore.reset();
     }
 
     setParamsForBox() {
         this.rightBox = this.canvas.width / 2 + 300;
         this.leftBox = this.canvas.width / 2 - 300;
-        this.bottomBox = this.canvas.height - 100;
+        this.bottomBox = this.canvas.height - 200;
         this.topBox = this.bottomBox - 500;
     }
 
 
     update(deltatime) {
 
+        if(!this.isGameActive) return;
+        if(this.isPause) return;
         //Fps
         this.fps = Math.round(1 / deltatime);
         if (this.isWin || this.isLose) return;
@@ -86,43 +115,59 @@ export class GameManager {
         //Time
         this.timeInGame = Math.round((this.timeInGame + deltatime) * 100) / 100
 
-        //Change Obj to state can Merge
-        for (let i = 0; i < this.gameObjects.length; i++) {
-            if (this.gameObjects[i].canMerge) continue;
-            this.gameObjects[i].updateCanMerge(this.topBox);
+        // //Change Obj to state can Merge
+        // for (let i = 0; i < this.gameObjects.length; i++) {
+        //     if (this.gameObjects[i].canMerge) continue;
+        //     this.gameObjects[i].updateCanMerge(this.topBox);
+        // }
+
+
+        this.poolingEmojis.activeObjs.forEach(obj =>
+        {
+            if(!obj.canMerge)
+            {
+                obj.updateState(this.topBox);
+            }
         }
+        )
 
         //Obj
-        this.gameObjects.forEach(gameObject => {
-            gameObject.update(deltatime)
-        });
+        // this.gameObjects.forEach(gameObject => {
+        //     gameObject.update(deltatime)
+        // });
 
-
+        this.poolingEmojis.activeObjs.forEach(gameObject =>
+        {
+            gameObject.update(deltatime);
+        }
+        )
 
         //Particles
-        this.listParticles.forEach((particle, index) => {
-            if (particle.alpha <= 0) {
-                this.listParticles.splice(index, 1)
-            } else {
-                particle.update(deltatime)
-            }
-        });
+        // this.listParticles.forEach((particle, index) => {
+        //     if (particle.alpha <= 0) {
+        //         this.listParticles.splice(index, 1)
+        //     } else {
+        //         particle.update(deltatime)
+        //     }
+        // });
 
-        //this.inputHandler.update(deltatime);
+        this.poolingParticles.update(deltatime);
+        
+        // //Update TextScore
+        // this.textScores.forEach((element, index) => {
+        //     if (element.alpha <= 0) {
+        //         this.textScores.splice(index, 1)
+        //     } else {
+        //         element.update(deltatime)
+        //     }
+        // });
 
-        //Update TextScore
-        this.textScores.forEach((element, index) => {
-            if (element.alpha <= 0) {
-                this.textScores.splice(index, 1)
-            } else {
-                element.update(deltatime)
-            }
-        });
-
+        this.poolingTextScore.update(deltatime);
         //Check Lose
         if (this.isCollidingWithBoundary()) {
             this.loseCountdownTime -= deltatime;
             if (this.loseCountdownTime <= 0) {
+              
                 this.isLose = true;
                 console.log("losse")
             }
@@ -134,26 +179,29 @@ export class GameManager {
     }
 
 
-
     draw() {
+        if(!this.isGameActive) return;
+
         this.renderer.render();
     }
 
 
-
     gameColision() {
         //Reset Collision
-        this.gameObjects.forEach(obj => {
-            obj.isColiding = false;
-        });
 
-        //Check Colision With Us
-        for (let i = this.gameObjects.length - 1; i >= 0; i--) {
-            const obj1 = this.gameObjects[i];
-            for (let j = this.gameObjects.length - 1; j >= i + 1; j--) {
-                const obj2 = this.gameObjects[j];
+        this.poolingEmojis.activeObjs.forEach(obj =>
+        {
+            obj.isColiding = false;
+        }
+        )
+
+        const activeObjects = Array.from(this.poolingEmojis.activeObjs);
+        for (let i = activeObjects.length - 1; i >= 0; i--) {
+            const obj1 = activeObjects[i];
+            for (let j = activeObjects.length - 1; j >= i + 1; j--) {
+                const obj2 = activeObjects[j];
                 if (obj1.CheckColision(obj2)) {
-                    const isMerge = this.MergedEmojis(obj1, obj2, j);
+                    const isMerge = this.MergedEmojis(obj1, obj2);
                     if (!isMerge) {
                         this.resolveCollision(obj1, obj2);
                         obj1.handleColison();
@@ -162,6 +210,26 @@ export class GameManager {
                 }
             }
         }
+
+        // this.gameObjects.forEach(obj => {
+        //     obj.isColiding = false;
+        // });
+
+        // //Check Colision With Us
+        // for (let i = this.gameObjects.length - 1; i >= 0; i--) {
+        //     const obj1 = this.gameObjects[i];
+        //     for (let j = this.gameObjects.length - 1; j >= i + 1; j--) {
+        //         const obj2 = this.gameObjects[j];
+        //         if (obj1.CheckColision(obj2)) {
+        //             const isMerge = this.MergedEmojis(obj1, obj2, j);
+        //             if (!isMerge) {
+        //                 this.resolveCollision(obj1, obj2);
+        //                 obj1.handleColison();
+        //                 obj2.handleColison();
+        //             }
+        //         }
+        //     }
+        // }
 
         this.detectedColisionBox();
 
@@ -197,18 +265,28 @@ export class GameManager {
     }
 
     isCollidingWithBoundary() {
-        let holder = [];
-        for (let i = 0; i < this.gameObjects.length; i++) {
-            if (!this.gameObjects[i].canCheckLose) continue;
-            if (this.gameObjects[i].y <= this.topBox) {
-                holder.push(gameObjects[i]);
+       
+        // for (let i = 0; i < this.gameObjects.length; i++) {
+        //     if (!this.gameObjects[i].canCheckLose) continue;
+        //     if (this.gameObjects[i].y <= this.topBox) {
+        //         holder.push(gameObjects[i]);
+        //     }
+        // }
+        let count = 0;
+        this.poolingEmojis.activeObjs.forEach(obj =>
+        {
+            if(obj.canCheckLose && obj.y - obj.radius/2 < this.topBox)
+            {
+                count++;
             }
-        }
-        return holder.length > 0;
+        });
+        return count > 0;
     }
 
     detectedColisionBox() {
-        this.gameObjects.forEach(gameObject => {
+
+        this.poolingEmojis.activeObjs.forEach(gameObject =>
+        {
             if (gameObject.x < this.leftBox + gameObject.radius) {
                 gameObject.vx = Math.abs(gameObject.vx) * 0.5;
                 gameObject.x = this.leftBox + gameObject.radius;
@@ -225,23 +303,47 @@ export class GameManager {
                 gameObject.vx *= 0.95;
                 gameObject.y = this.bottomBox - gameObject.radius;
             }
-        });
+        }
+        )
+
+        // this.gameObjects.forEach(gameObject => {
+        //     if (gameObject.x < this.leftBox + gameObject.radius) {
+        //         gameObject.vx = Math.abs(gameObject.vx) * 0.5;
+        //         gameObject.x = this.leftBox + gameObject.radius;
+        //     }
+        //     else if (gameObject.x + gameObject.radius >= this.rightBox) {
+        //         gameObject.vx = -Math.abs(gameObject.vx) * 0.5;
+        //         gameObject.x = this.rightBox - gameObject.radius;
+        //     }
+
+        //     if (gameObject.y + gameObject.radius >= this.bottomBox &&
+        //         gameObject.x > this.leftBox && gameObject.x < this.rightBox
+        //     ) {
+        //         gameObject.vy = -Math.abs(gameObject.vy) * 0.5;
+        //         gameObject.vx *= 0.95;
+        //         gameObject.y = this.bottomBox - gameObject.radius;
+        //     }
+        // });
     }
 
 
 
-    MergedEmojis(obj1, obj2, index2) {
+    MergedEmojis(obj1, obj2, ) {
         if (obj1.type == obj2.type && obj1.canMerge && obj2.canMerge) {
             const nextEmoji = EmojiDatas.getNextEmoji(obj1.type);
             //Check Win
-            if (nextEmoji.type == EmojiDatas.GetLastEmoji()) {
+
+           
+            if (nextEmoji.type == EmojiDatas.GetLastEmoji().type) {
                 this.upDateBestTime(this.timeInGame);
                 this.isWin = true;
+                this.uimanager.ActionWin(this.playerScore,this.timeInGame);
             }
 
             //UpdateEmoji
             obj1.updateModelEmoji(nextEmoji.radius, nextEmoji.type, nextEmoji.srcIMG);
-            this.gameObjects.splice(index2, 1);
+            //this.gameObjects.splice(index2, 1);
+            this.poolingEmojis.deSpawn(obj2);
 
             //Update Point
             this.addPointPlayer(nextEmoji.score);
@@ -249,7 +351,7 @@ export class GameManager {
             this.InstantiateTextScore(obj1.x, obj1.y - obj1.radius, nextEmoji.score);
 
             //Create Partical
-            this.createParticels(obj1.x, obj1.y);
+            this.spawmParticles(obj1.x, obj1.y);
 
             return true;
         }
@@ -259,9 +361,11 @@ export class GameManager {
 
     //Instan score Text when merge
     InstantiateTextScore(posX, posY, score) {
-        this.textScores.push(new TextScore(this.context, posX, posY, ` + ${score}`));
+        
+        let textScoreSpawm = this.poolingTextScore.get();
+        textScoreSpawm.init(this.context,posX,posY,` + ${score}`);
+       // this.textScores.push(new TextScore(this.context, posX, posY, ` + ${score}`));
     }
-
 
     upDateBestTime(time) {
         if (time < this.bestTime) {
@@ -293,28 +397,41 @@ export class GameManager {
 
 
     createFormulaGuide(x, y) {
-        const space = 60;
+        const space = 30;
         let listDataEmojis = EmojiDatas.GetListEmojiDatas();
         listDataEmojis.forEach(emoji => {
             const assetEmoji = EmojiDatas.GetAssetEmoji(emoji);
-            this.userGuide.push(new Emoji(this.context, x, y, 0, 0, assetEmoji.radius / 2, assetEmoji.type, assetEmoji.srcIMG));
-            y += assetEmoji.radius + space;
+            const newEmoji = new Emoji();
+            newEmoji.init(this.context, x, y, 0, 0, assetEmoji.radius / 2, assetEmoji.type, assetEmoji.srcIMG);
+            this.userGuide.push(newEmoji);
+            x += assetEmoji.radius + space;
         });
     }
 
 
-    createParticels(posX, posY) {
+    spawmParticles(posX, posY) {
         for (let i = 0; i < 50; i++) {
-            this.listParticles.push(
-                new Particle(this.context, posX, posY,
-                    Math.floor(Math.random() * (15 - 10 + 1)) + 10,
-                    'yellow',
-                    (Math.random() - 0.5) * (Math.random() * 6) * 100,
-                    (Math.random() - 0.5) * (Math.random() * 6) * 100
-                )
+            // this.listParticles.push(
+            //     new Particle(this.context, posX, posY,
+            //         Math.floor(Math.random() * (15 - 10 + 1)) + 10,
+            //         'yellow',
+            //         (Math.random() - 0.5) * (Math.random() * 6) * 100,
+            //         (Math.random() - 0.5) * (Math.random() * 6) * 100
+            //     )
+            // )
+
+            const particle = this.poolingParticles.get();
+            particle.init(
+                this.context, posX, posY,
+                Math.floor(Math.random() * (15 - 10 + 1)) + 10,
+                'yellow',
+                (Math.random() - 0.5) * (Math.random() * 6) * 100,
+                (Math.random() - 0.5) * (Math.random() * 6) * 100
             )
+
         }
     }
+
 
 
 
@@ -324,20 +441,22 @@ export class GameManager {
     //Event Handle Mouse
     handleMouseDown(mousePos) {
         // Logic for mouse down
-        if (this.isWin || this.isLose) return;
+        if(this.isPause) return;
+        if (this.isWin || this.isLose) return;        
+        if(mousePos.y > this.topBox - EmojiDatas.GetLastEmoji().radius ) return;
+
+      
+        this.newEmoji = this.poolingEmojis.get();
         const emojiType = EmojiDatas.GetRandomTypeEmoji();
         const assetEmoji = EmojiDatas.GetAssetEmoji(emojiType);
-        this.newEmoji = new Emoji(this.context, mousePos.x, mousePos.y, 0, 0, assetEmoji.radius, assetEmoji.type, assetEmoji.srcIMG);
+        this.newEmoji.init(this.context, mousePos.x, mousePos.y, 0, 0, assetEmoji.radius, assetEmoji.type, assetEmoji.srcIMG);
         this.newEmoji.useGravity = false;
-        this.gameObjects.push(this.newEmoji);
         this.createWayPoints({ x: mousePos.x, y: mousePos.y + this.newEmoji.radius });
-
-
     }
     handleMouseDrag(mousePos) {
 
-        if(this.newEmoji == null) return;
-        if (mousePos.y >= this.topBox) {
+        if (this.newEmoji == null) return;
+        if (mousePos.y >= this.topBox - this.newEmoji.radius) {
             mousePos.y = this.topBox - this.newEmoji.radius;
         }
         if (mousePos.x <= this.leftBox + this.newEmoji.radius) {

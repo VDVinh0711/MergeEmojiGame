@@ -1,19 +1,25 @@
-export class TextScore {
-    constructor(context, x, y, text) {
-        this.x = x,
-            this.context = context;
-        this.y = y,
-            this.text = text;
+import { GameObject } from "./GameObject.js";
+export class TextScore extends GameObject {
+    constructor() {
+        super();
+        this.text = '';
         this.alpha = 1;
     }
 
+    init(context,x,y,text)
+    {
+        super.init(context,x,y,0,-50);
+        this.text = text;
+        this.alpha = 1;
+    }
 
     draw() {
+        if(!this.isActive) return;
         this.context.save()
         this.context.beginPath();
         this.context.globalAlpha = this.alpha
-        this.context.fillStyle = 'black'; 
-        this.context.font = 'bold 30px Verdana'; 
+        this.context.fillStyle = 'black';
+        this.context.font = 'bold 30px Verdana';
         this.context.textAlign = 'center';
         this.context.textBaseline = 'top';
         this.context.fillText(`${this.text}`, this.x, this.y);
@@ -21,6 +27,12 @@ export class TextScore {
     }
 
     update(deltatime) {
+        this.y+= this.vy * deltatime;
         this.alpha -= 0.01;
+        if(this.alpha < 0)
+        {
+            this.isActive = false;
+        }
     }
+
 }
