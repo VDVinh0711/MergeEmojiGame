@@ -1,5 +1,5 @@
 import { Button } from "./Button.js";
-export class UIMainMenu
+export class UIChoseLevel
 {
     constructor(uimanager)
     {
@@ -7,21 +7,18 @@ export class UIMainMenu
         this.context = uimanager.context;
         this.buttons = [];
         this.background = new Image();
-
-        this.background.src = './Asset/Background/bkmain2.jpg';
+       this.background.src = './Asset/Background/bkmain2.jpg';
         this.init();
     }
 
     init()
     {
-
-        
-        let  buttonPlay = new Button(this.canvas.width/2 -100,this.canvas.height/2 - 50,200,100 ,'black',0,'PlayGame','white', 'italic bold 25px Verdana');
-        let  buttonChoseLevel = new Button(this.canvas.width/2 -100,this.canvas.height/2 + 100,200,100 ,'black',1,'Chose Level','white', 'italic bold 25px Verdana');
-        let  btnShowRec = new Button(this.canvas.width/2 -100,this.canvas.height/2 + 250,200,100 ,'black',2,'Record','white', 'italic bold 25px Verdana');
-        this.buttons.push(buttonPlay);
-        this.buttons.push(buttonChoseLevel);
-        this.buttons.push(btnShowRec);
+        let  btnEasy = new Button(this.canvas.width/2 -100,this.canvas.height/2 - 150,200,100 ,'black',0,'Easy','white', 'italic bold 25px Verdana');
+        let  btnMedium = new Button(this.canvas.width/2 -100,this.canvas.height/2 ,200,100 ,'black',1,'Medium','white', 'italic bold 25px Verdana');
+        let  btnHard = new Button(this.canvas.width/2 -100,this.canvas.height/2 + 150,200,100 ,'black',2,'Hard','white', 'italic bold 25px Verdana');
+        this.buttons.push(btnEasy);
+        this.buttons.push(btnMedium);
+        this.buttons.push(btnHard);
     }
 
     render()
@@ -37,7 +34,6 @@ export class UIMainMenu
 
     event(pos)
     {
-        console.log('click');
         let result = '';
         this.buttons.forEach(button => {
             if(button.onclick(pos))

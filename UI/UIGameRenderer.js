@@ -10,8 +10,7 @@ export class UIGameRenderer
         this.type = type;
     }
 
-
-
+    
 
 
     render(gameState)
@@ -35,6 +34,18 @@ export class UIGameRenderer
                
                 this.clear();
                 this.drawUIWinGame();
+                break;
+            case UIManager.UIState.choselevel:
+                this.clear();
+                this.drawUiChoseLevel();
+                break;
+            case UIManager.UIState.losegame:
+                this.clear();
+                this.drawUiLoseGame();
+                break;
+            case UIManager.UIState.showrecord:
+                this.clear();
+                this.drawUIPlayerRecord();
                 break;
         }
         
@@ -69,6 +80,16 @@ export class UIGameRenderer
     drawUiLoseGame()
     {
         this.uimanager.uiLose.render();
+    }
+
+    drawUiChoseLevel()
+    {
+        this.uimanager.uiChoseLevel.render();
+    }
+
+    drawUIPlayerRecord()
+    {
+        this.uimanager.uiPlayerRecord.render();
     }
 
     

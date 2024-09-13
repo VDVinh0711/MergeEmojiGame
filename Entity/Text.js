@@ -1,5 +1,5 @@
 export class Text {
-    constructor(context, x, y, text, font = '16px Arial', color = 'black') {
+    constructor(context, x, y, text, font = '16px Arial', color = 'black' ) {
         this.context = context;
         this.x = x;
         this.y = y;

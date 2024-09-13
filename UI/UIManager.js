@@ -7,6 +7,11 @@ import { PauseGame } from "./UIPauseGame.js";
 
 import { UiWin } from "./UIWin.js";
 import { UILose } from "./UILose.js";
+import { UIChoseLevel } from "./UIChoseLevel.js";
+import { GameManager } from "../GameCore/GameManger.js";
+import LevelManager from "../Utils/LevelManager.js";
+
+import { UIPlayerRecord } from "./UIPlayerRecord.js";
 export class UIManager {
     static UIState =
         {
@@ -14,7 +19,9 @@ export class UIManager {
             ingame: 1,
             pausegame: 2,
             wingame: 3,
-            losegame: 4
+            losegame: 4,
+            choselevel:5,
+            showrecord:6,
         }
     constructor(gameManager) {
         this.canvas = document.getElementById("mainview");
@@ -26,6 +33,9 @@ export class UIManager {
         this.uiPauseGame = new PauseGame(this);
         this.uiWin = new UiWin(this);
         this.uiLose = new UILose(this);
+        this.uiChoseLevel = new UIChoseLevel(this);
+        this.uiPlayerRecord = new UIPlayerRecord(this);
+
         this.uiRenderer = new UIGameRenderer(this, this.context, this.canvas, 'mainMenu');
         this.inputHandle = new InputHandler(this.canvas, this.context);
         this.gameState = UIManager.UIState.mainmenu;
@@ -53,6 +63,13 @@ export class UIManager {
                     case 0:
                         this.StartGame();
                         break;
+                    case 1:
+                        this.ChoseLevel();
+                        break;
+                    case 2:
+                        this.ShowRecordPlayer();
+                        break;
+
                 }
                 break;
             case UIManager.UIState.ingame:
@@ -70,7 +87,7 @@ export class UIManager {
                         this.ContinueGame();
                         break;
                     case 1:
-                        this.ExitGame();
+                        this.BackToMainMenu();
                         break;
                 }
                 break;
@@ -80,7 +97,7 @@ export class UIManager {
                         this.StartGame();
                         break;
                     case 1:
-                        this.ExitGame();
+                        this.BackToMainMenu();
                         break;
                 }
                 break;
@@ -90,20 +107,78 @@ export class UIManager {
                         this.StartGame();
                         break;
                     case 1:
-                        this.ExitGame();
+                        this.BackToMainMenu();
                         break;
                 }
                 break;
+            case UIManager.UIState.choselevel:
+                switch(this.uiChoseLevel.event(pos))
+                {
+                    case 0:
+                        console.log('easy')
+                        this.EasyLevel();
+                        break;
+                    case 1:
+                        console.log('medium')
+                        this.MediumLevel();
+                        break;
+                    case 2:
+                        console.log('hard');
+                        this.HardLevel();
+                        break;
+                }
+                break;
+            case UIManager.UIState.showrecord:
+                switch(this.uiPlayerRecord.event(pos))
+                {
+                    case 0:
+                        this.BackToMainMenu();
+                        break;
+                }
+                break;
+               
         }
     }
 
 
 
     StartGame() {
-        this.gameManager.isGameActive = true;
-        this.gameManager.ResetGame();
+       this.gameManager.PlayGame(LevelManager.LevelType.easy);
+       this.gameState = UIManager.UIState.ingame;
+    }
+
+
+
+
+
+    ShowRecordPlayer()
+    {
+        this.gameState = UIManager.UIState.showrecord;
+        this.uiPlayerRecord.setRecord();
+    }
+
+    EasyLevel()
+    {
+        this.gameManager.PlayGame(LevelManager.LevelType.easy);
         this.gameState = UIManager.UIState.ingame;
     }
+    MediumLevel()
+    {
+        this.gameManager.PlayGame(LevelManager.LevelType.medium);
+        this.gameState = UIManager.UIState.ingame;
+    }
+    HardLevel()
+    {
+        this.gameManager.PlayGame(LevelManager.LevelType.hard);
+        this.gameState = UIManager.UIState.ingame;
+    }
+
+
+    ChoseLevel()
+    {
+        this.gameState = UIManager.UIState.choselevel;
+    }
+
     PauseGame() {
         this.gameManager.isPause = true;
         this.gameState = UIManager.UIState.pausegame;
@@ -112,16 +187,13 @@ export class UIManager {
         this.gameManager.isPause = false;
         this.gameState = UIManager.UIState.ingame;
     }
-    ExitGame() {
+    BackToMainMenu() {
         this.gameManager.isgameActive = false;
         this.gameState = UIManager.UIState.mainmenu;
     }
 
     ActionWin(score,time)
     {
-        console.log(`${score} == ${time}`);
-        
-
         this.uiWin.setParameter(score,time);
         this.gameState = UIManager.UIState.wingame;
     }

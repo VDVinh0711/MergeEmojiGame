@@ -7,11 +7,8 @@ import { UIManager } from './UI/UIManager.js';
 
 let gameManager;
 let uiManager;
-
 let deltaTime = 0; // aka delta time
 let oldTimeStamp = 0;
-
-
 
 window.onload = init();
 
@@ -30,17 +27,12 @@ function gameLoop(timeStamp) {
     deltaTime = Math.min(deltaTime, 0.1);
     oldTimeStamp = timeStamp;
 
-
-
-
     gameManager.update(deltaTime);
     gameManager.gameColision();
     gameManager.draw();
 
 
     uiManager.draw();
-
-
     requestAnimationFrame(gameLoop);
 }
 
