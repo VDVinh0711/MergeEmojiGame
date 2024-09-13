@@ -10,6 +10,10 @@ const TypeOfEmoji =
 }
 
 
+
+
+
+
 const DataEmojis = {
     Angry: createFruit(TypeOfEmoji.Angry, './Asset/Emoji/Angry.png', 30, 10),
     Sick: createFruit(TypeOfEmoji.Sick, './Asset/Emoji/Sick.png', 35, 20),
@@ -24,6 +28,7 @@ function createFruit(type, srcIMG, radius, score) {
     return {
         type,
         srcIMG,
+        initialRadius: radius,
         radius,
         score,
     };
@@ -67,7 +72,7 @@ export default class EmojiDatas {
         for (let key in DataEmojis) {
             // Lấy object hiện tại
             let emojiObject = DataEmojis[key];
-            emojiObject.radius *=level;
+            emojiObject.radius  = emojiObject.initialRadius * level;
         }
     }
 }
