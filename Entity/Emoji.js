@@ -2,52 +2,9 @@
 
 import { GameObject } from "./GameObject.js";
 
-// //Main GameObject
-// class GameObject {
-//     constructor(context, x, y, vx, vy) {
-//         this.context = null;
-//         this.x = 0;
-//         this.y = 0;
-//         this.vx = 0;
-//         this.vy = 0;
-//         this.isColiding = false;
-//         this.useGravity = true;
-//         this.isLife = false;
-//     }
-
-//     init(context, x, y, vx, vy)
-//     {
-//         this.context = context;
-//         this.x = x;
-//         this.y = y;
-//         this.vx = vx;
-//         this.vy = vy;
-//         this.isLife = true;
-//     }
-
-//     isActive()
-//     {
-//         return this.isLife;
-//     }
-// }
-
 
 //Fruit
 export class Emoji extends GameObject {
-    // constructor(context, x, y, vx, vy, radius, type, srcIMG) {
-    //     super(context, x, y, vx, vy);
-    //     this.radius = radius;
-    //     this.mass = 70;
-    //     this.type = type;
-    //     this.canCheckLose = false;
-    //     this.canMerge = false;
-    //     this.sprite = new Image();
-    //     this.sprite.onload = () => {}// Do something if you need handle logic when load imgage
-    //     this.sprite.src = srcIMG;
-    //     this.angle = -90;
-    // }
-
-
     constructor()
     {
         super();
@@ -73,18 +30,9 @@ export class Emoji extends GameObject {
     }
     draw() {
 
-        //if(!this.isActive) return;
+        
         this.context.save();
         this.context.beginPath();
-        // this.context.beginPath();
-        // this.context.lineWidth = 2;
-        // this.context.strokeStyle = 'red';
-        // this.context.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        // this.context.stroke();
-
-
-
-        
 
         this.context.translate(this.x, this.y);
         this.context.rotate(Math.PI / 180 * (this.angle + 90));
@@ -131,7 +79,7 @@ export class Emoji extends GameObject {
 
     handleColison() {
         this.isColiding = true;
-       // this.canCheckLose = true;
+      
     }
     rotate(deltatime) {
         let targetAngle = Math.atan2(this.vy, this.vx) * 180 / Math.PI;

@@ -8,10 +8,11 @@ import { UserGuide } from '../Components/UserGuid.js';
 import { Particles } from '../Components/Particles.js';
 import { ScorePopup } from '../Components/ScorePopup.js';
 import LevelManager from '../Utils/LevelManager.js';
+import SoundManager from '../SoundManager.js';
 
 
 export class GameManager {
-    
+
     constructor() {
         this.canvas = document.getElementById("mainview");
         this.context = this.canvas.getContext('2d');
@@ -23,8 +24,8 @@ export class GameManager {
         this.fps = 0;
         this.timeInGame = 0;
 
-        this.currentLevel  = LevelManager.LevelType.easy;
-      
+        this.currentLevel = LevelManager.LevelType.easy;
+
 
         this.loseCountdownTime = 4;
         this.initialLoseCountdownTime = 4;
@@ -43,8 +44,8 @@ export class GameManager {
         //Componets
         this.wayPoints = new Waypoint(this.context);
         this.userGuide = new UserGuide(this.context);
-        
-        this.scorePopup = new ScorePopup(this.context, 'white');
+
+        this.scorePopup = new ScorePopup(this.context);
         this.particles = new Particles(this.context, 'white');
 
 
@@ -76,10 +77,8 @@ export class GameManager {
     }
 
 
-    PlayGame(Level)
-    {
-        switch (Level)
-        {
+    PlayGame(Level) {
+        switch (Level) {
             case LevelManager.LevelType.easy:
                 EmojiDatas.upDateLevel(1);
                 break;
@@ -92,7 +91,6 @@ export class GameManager {
         }
         this.currentLevel = Level;
         this.ResetGame();
-        console.log("call this ");
     }
 
     ResetGame() {
@@ -138,13 +136,14 @@ export class GameManager {
 
         this.particles.update(deltatime);
         this.scorePopup.update(deltatime);
+
+        
         //Check Lose
         if (this.isCollidingWithBoundary()) {
             this.loseCountdownTime -= deltatime;
             if (this.loseCountdownTime <= 0) {
                 this.isLose = true;
                 this.uimanager.ActionLose(this.playerScore);
-                console.log("Lose");
             }
         }
         else {
@@ -157,6 +156,9 @@ export class GameManager {
         this.renderer.render();
     }
 
+
+
+    // You can extract this method into a js file and then import this function into
     gameColision() {
         //Reset Collision
 
@@ -235,7 +237,7 @@ export class GameManager {
             if (gameObject.y + gameObject.radius >= this.bottomBox &&
                 gameObject.x > this.leftBox && gameObject.x < this.rightBox
             ) {
-                gameObject.vy = -Math.abs(gameObject.vy) * 0.5;
+                gameObject.vy = -Math.abs(gameObject.vy) * 0.1;
                 gameObject.vx *= 0.95;
                 gameObject.y = this.bottomBox - gameObject.radius;
             }
@@ -248,11 +250,16 @@ export class GameManager {
     MergedEmojis(obj1, obj2,) {
         if (obj1.type == obj2.type && obj1.canMerge && obj2.canMerge) {
             const nextEmoji = EmojiDatas.getNextEmoji(obj1.type);
-            //Check Win
+           
 
+            //PlaySound Merge
+             
+            SoundManager.PlaySound('mergesound');
+           
+            //Check Win
             if (nextEmoji.type == EmojiDatas.GetLastEmoji().type) {
                 // this.upDateBestTime(this.timeInGame);
-                LevelManager.SetNewRecord(this.currentLevel,this.timeInGame);
+                LevelManager.SetNewRecord(this.currentLevel, this.timeInGame);
                 this.isWin = true;
                 this.uimanager.ActionWin(this.playerScore, this.timeInGame);
             }
@@ -275,15 +282,7 @@ export class GameManager {
         return false;
     }
 
-    // upDateBestTime(time) {
-    //     if (time < this.bestTime) {
-    //         this.bestTime = time;
-    //     }
-    //     if (this.bestTime == 0) {
-    //         this.bestTime = time;
-    //     }
 
-    // }
 
     addPointPlayer(score) {
         this.playerScore += score;
@@ -292,7 +291,7 @@ export class GameManager {
     //Event Handle Mouse
     handleMouseDown(mousePos) {
 
-        
+
         // Logic for mouse down
         if (this.isPause) return;
         if (this.isWin || this.isLose) return;

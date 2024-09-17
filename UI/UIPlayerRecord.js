@@ -18,7 +18,6 @@ export class UIPlayerRecord
     {   
         let  backMenu = new Button(this.canvas.width/2 -100,this.canvas.height - 200,200,100 ,'black',0,'Back Menu','white', 'italic bold 25px Verdana');
         this.buttons.push(backMenu);
-        console.log(LevelManager.leveRecord);
     }
 
  
@@ -30,7 +29,7 @@ export class UIPlayerRecord
         let posYStart = 200;
         for (let key in LevelManager.leveRecord) {
             let level = LevelManager.leveRecord[key];
-            this.texttile = new Text(this.context, this.canvas.width/2 , posYStart , `${level.type} : ${level.besttime} S` ,'italic bold 35px Verdana' , 'Black');
+            this.texttile = new Text(this.context, this.canvas.width/2 , posYStart , `${level.type} : ${level.besttime} S` ,'italic bold 35px Verdana' , 'black');
             this.textRecords.push(this.texttile);
             posYStart +=space;
         }
@@ -43,8 +42,6 @@ export class UIPlayerRecord
         this.context.beginPath();
         this.context.drawImage(this.background,0,0,this.canvas.width,this.canvas.height);
 
-
-      
         this.textRecords.forEach(text => {
             text.draw();
         });

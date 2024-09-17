@@ -8,12 +8,7 @@ export class PauseGame
         this.canvas = uimanager.canvas;
         this.uimanager = uimanager;
         this.buttons = [];
-
-
         this.background = new Image();
-        this.background.onload = () =>
-        {
-        }
         this.background.src = './Asset/Background/pauseBK.jpg';
         this.init();
     }
@@ -21,11 +16,12 @@ export class PauseGame
 
     init()
     {
-        
-        let btnResume = new Button(this.canvas.width/2 -100,this.canvas.height/2 - 50,200,100 ,'black',0,'Continue','white', 'italic bold 25px Verdana');
-        let btnExit = new Button(this.canvas.width/2 -100,this.canvas.height/2 + 100,200,100 ,'black',1,'Exit','white', 'italic bold 25px Verdana');
+        let btnResume = new Button(this.canvas.width/2 -100,this.canvas.height/2 - 200,200,100 ,'black',0,'Continue','white', 'italic bold 25px Verdana');
+        let btnResgame = new Button(this.canvas.width/2 -100,this.canvas.height/2 - 50,200,100 ,'black',1,'Restart','white', 'italic bold 25px Verdana');
+        let btnExit = new Button(this.canvas.width/2 -100,this.canvas.height/2 + 100,200,100 ,'black',2,'Exit','white', 'italic bold 25px Verdana');
         this.buttons.push(btnResume);
         this.buttons.push(btnExit);
+        this.buttons.push(btnResgame);
     }
 
     render()
@@ -37,8 +33,7 @@ export class PauseGame
         this.buttons.forEach(button =>
         {
             button.draw(this.context);
-        }
-        )
+        });
     }
 
     event(pos)
@@ -50,7 +45,6 @@ export class PauseGame
                 result = button.action;
             }
         });
-       
         return result;
     }
 }

@@ -4,14 +4,13 @@ import { InputHandler } from "../Utils/InputHandler.js";
 import { UIMainMenu } from "./UIMainMenu.js";
 import { UiInGame } from "./UIInGame.js"
 import { PauseGame } from "./UIPauseGame.js";
-
 import { UiWin } from "./UIWin.js";
 import { UILose } from "./UILose.js";
 import { UIChoseLevel } from "./UIChoseLevel.js";
-import { GameManager } from "../GameCore/GameManger.js";
 import LevelManager from "../Utils/LevelManager.js";
 
 import { UIPlayerRecord } from "./UIPlayerRecord.js";
+import SoundManager from "../SoundManager.js";
 export class UIManager {
     static UIState =
         {
@@ -87,6 +86,9 @@ export class UIManager {
                         this.ContinueGame();
                         break;
                     case 1:
+                        this.RestartGame();
+                        break;
+                    case 2:
                         this.BackToMainMenu();
                         break;
                 }
@@ -94,7 +96,7 @@ export class UIManager {
             case UIManager.UIState.wingame:
                 switch (this.uiWin.event(pos)) {
                     case 0:
-                        this.StartGame();
+                        this.RestartGame();
                         break;
                     case 1:
                         this.BackToMainMenu();
@@ -104,7 +106,7 @@ export class UIManager {
             case UIManager.UIState.losegame:
                 switch (this.uiWin.event(pos)) {
                     case 0:
-                        this.StartGame();
+                        this.RestartGame();
                         break;
                     case 1:
                         this.BackToMainMenu();
@@ -115,15 +117,15 @@ export class UIManager {
                 switch(this.uiChoseLevel.event(pos))
                 {
                     case 0:
-                        console.log('easy')
+                     
                         this.EasyLevel();
                         break;
                     case 1:
-                        console.log('medium')
+                       
                         this.MediumLevel();
                         break;
                     case 2:
-                        console.log('hard');
+                      
                         this.HardLevel();
                         break;
                 }
@@ -141,14 +143,17 @@ export class UIManager {
     }
 
 
-
     StartGame() {
        this.gameManager.PlayGame(LevelManager.LevelType.easy);
        this.gameState = UIManager.UIState.ingame;
     }
 
 
-
+    RestartGame()
+    {
+        this.gameManager.ResetGame();
+        this.gameState = UIManager.UIState.ingame;
+    }
 
 
     ShowRecordPlayer()
@@ -194,11 +199,13 @@ export class UIManager {
 
     ActionWin(score,time)
     {
+        SoundManager.PlaySound('wingame'); // ActiveSound
         this.uiWin.setParameter(score,time);
         this.gameState = UIManager.UIState.wingame;
     }
     ActionLose(score)
     {
+        SoundManager.PlaySound('losegame'); // Active sound
         this.uiLose.setParameter(score);
         this.gameState = UIManager.UIState.losegame;
     }

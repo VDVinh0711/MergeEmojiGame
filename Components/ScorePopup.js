@@ -3,10 +3,9 @@ import { ObjectPooling } from "../DesignPattern/ObjectPooling.js";
 import { TextScore } from "../Entity/TextScore.js";
 export class ScorePopup
 {
-    constructor(context, color)
+    constructor(context)
     {
         this.context = context;
-        this.color  = color;
         this.poolingTextScore = new ObjectPooling(this.context, TextScore, 50);
     }
 

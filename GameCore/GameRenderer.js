@@ -47,22 +47,13 @@ export class GameRenderer {
     drawZoneSpawm() {
         this.context.beginPath();
         this.context.lineWidth = 20;
-        this.context.strokeStyle = 'red';
+        this.context.strokeStyle =  this.gammanager.isCollidingWithBoundary() ?  'red' : 'green';
         this.context.moveTo(this.gammanager.leftBox, this.gammanager.topBox);
         this.context.lineTo(this.gammanager.rightBox, this.gammanager.topBox);
         this.context.stroke();
     }
 
     drawBox() {
-
-        // let sprite = new Image();
-        // sprite.src = './Asset/Background/boxv2.jpg';
-        // this.context.imageSmoothingEnabled = true;
-        // this.context.imageSmoothingQuality = 'high';
-        // this.context.beginPath();
-        // this.context.drawImage(sprite, this.gammanager.leftBox, this.gammanager.topBox, this.gammanager.rightBox - this.gammanager.leftBox, this.gammanager.bottomBox - this.gammanager.topBox);
-
-
 
         this.context.beginPath();
         this.context.fillStyle = 'rgba(235,233,155,0.5)';

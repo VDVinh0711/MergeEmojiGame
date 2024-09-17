@@ -1,4 +1,5 @@
 import { GameManager } from './GameCore/GameManger.js';
+import SoundManager from './SoundManager.js';
 import { UIManager } from './UI/UIManager.js';
 
 
@@ -13,6 +14,8 @@ let oldTimeStamp = 0;
 window.onload = init();
 
 function init() {
+
+    SoundManager.PlaySound('background');
     gameManager = new GameManager();
     gameManager.isGameActive = false;
     uiManager = new UIManager(gameManager);
