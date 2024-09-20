@@ -37,7 +37,6 @@ export class UIMainMenu
 
     event(pos)
     {
-        console.log('click');
         let result = '';
         this.buttons.forEach(button => {
             if(button.onclick(pos))
@@ -45,7 +44,6 @@ export class UIMainMenu
                 result = button.action;
             }
         });
-        console.log(result);
         return result;
     }
 }

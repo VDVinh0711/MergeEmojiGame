@@ -14,7 +14,6 @@ export default class LevelManager {
     static currentLevel = LevelManager.LevelType.EASY;
 
     static setCurrentLevel(level) {
-        console.log(level);
         if (this.levelRecords.hasOwnProperty(level)) {
             this.currentLevel = level;
             return true;
