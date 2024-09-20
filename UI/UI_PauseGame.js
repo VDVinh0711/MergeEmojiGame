@@ -1,5 +1,5 @@
 
-import { Button } from "./Button.js";
+import { Button } from "../Entity/Button.js";
 export class PauseGame
 {
     constructor(uimanager)

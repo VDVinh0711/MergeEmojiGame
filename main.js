@@ -1,6 +1,5 @@
 import { GameManager } from './GameCore/GameManger.js';
-import SoundManager from './SoundManager.js';
-import { UIManager } from './UI/UIManager.js';
+import { UIManager } from './UI/UI_Manager.js';
 
 
 
@@ -15,13 +14,13 @@ window.onload = init();
 
 function init() {
 
-    SoundManager.PlaySound('background');
+    
     gameManager = new GameManager();
     gameManager.isGameActive = false;
     uiManager = new UIManager(gameManager);
     uiManager.init();
-    gameManager.addUIManger(uiManager);
     requestAnimationFrame(gameLoop);
+   
 }
 
 function gameLoop(timeStamp) {
@@ -31,7 +30,7 @@ function gameLoop(timeStamp) {
     oldTimeStamp = timeStamp;
 
     gameManager.update(deltaTime);
-    gameManager.gameColision();
+   // gameManager.gameColision();
     gameManager.draw();
 
 

@@ -1,4 +1,4 @@
-import { UIManager } from "./UIManager.js";
+import { UIManager } from "./UI_Manager.js";
 
 export class UIGameRenderer
 {

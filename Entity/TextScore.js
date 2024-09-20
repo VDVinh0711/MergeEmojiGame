@@ -11,6 +11,7 @@ export class TextScore extends GameObject {
         super.init(context,x,y,0,-50);
         this.text = text;
         this.alpha = 1;
+      
     }
 
     draw() {
@@ -18,7 +19,7 @@ export class TextScore extends GameObject {
         this.context.save()
         this.context.beginPath();
         this.context.globalAlpha = this.alpha
-        this.context.fillStyle = 'black';
+        this.context.fillStyle =  ['red', 'blue', 'yellow', 'black', 'white'][Math.floor(Math.random() * 5)];
         this.context.font = 'bold 30px Verdana';
         this.context.textAlign = 'center';
         this.context.textBaseline = 'top';
@@ -34,5 +35,7 @@ export class TextScore extends GameObject {
             this.isActive = false;
         }
     }
+
+    
 
 }

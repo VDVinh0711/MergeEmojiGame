@@ -1,4 +1,4 @@
-import { Button } from "./Button.js";
+import { Button } from "../Entity/Button.js";
 export class UIMainMenu
 {
     constructor(uimanager)

@@ -7,6 +7,7 @@ export class ScorePopup
     {
         this.context = context;
         this.poolingTextScore = new ObjectPooling(this.context, TextScore, 50);
+       
     }
 
     spawm(x,y,score)

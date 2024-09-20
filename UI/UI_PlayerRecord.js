@@ -1,5 +1,5 @@
 import LevelManager from "../Utils/LevelManager.js";
-import { Button } from "./Button.js";
+import { Button } from "../Entity/Button.js";
 import { Text } from "../Entity/Text.js";
 export class UIPlayerRecord
 {
@@ -27,9 +27,9 @@ export class UIPlayerRecord
         this.textRecords.length = 0;
         const space = 100;
         let posYStart = 200;
-        for (let key in LevelManager.leveRecord) {
-            let level = LevelManager.leveRecord[key];
-            this.texttile = new Text(this.context, this.canvas.width/2 , posYStart , `${level.type} : ${level.besttime} S` ,'italic bold 35px Verdana' , 'black');
+        for (let key in LevelManager.levelRecords) {
+            let level = LevelManager.levelRecords[key];
+            this.texttile = new Text(this.context, this.canvas.width/2 , posYStart , `${key} : ${level.bestTime} S` ,'italic bold 35px Verdana' , 'black');
             this.textRecords.push(this.texttile);
             posYStart +=space;
         }

@@ -1,16 +1,16 @@
-import { UIGameRenderer } from "./UIGameRenderer.js";
-import { Button } from "./Button.js";
+import { UIGameRenderer } from "./UI_GameRenderer.js";
+import { Button } from "../Entity/Button.js";
 import { InputHandler } from "../Utils/InputHandler.js";
-import { UIMainMenu } from "./UIMainMenu.js";
-import { UiInGame } from "./UIInGame.js"
-import { PauseGame } from "./UIPauseGame.js";
-import { UiWin } from "./UIWin.js";
-import { UILose } from "./UILose.js";
-import { UIChoseLevel } from "./UIChoseLevel.js";
+import { UIMainMenu } from "./UI_MainMenu.js";
+import { UiInGame } from "./UI_InGame.js"
+import { PauseGame } from "./UI_PauseGame.js";
+import { UiWin } from "./UI_Win.js";
+import { UILose } from "./UI_Lose.js";
+import { UIChoseLevel } from "./UI_ChoseLevel.js";
 import LevelManager from "../Utils/LevelManager.js";
 
-import { UIPlayerRecord } from "./UIPlayerRecord.js";
-import SoundManager from "../SoundManager.js";
+import { UIPlayerRecord } from "./UI_PlayerRecord.js";
+import SoundManager from "../Utils/SoundManager.js";
 export class UIManager {
     static UIState =
         {
@@ -28,7 +28,7 @@ export class UIManager {
         this.gameManager = gameManager;
 
         this.mainMenu = new UIMainMenu(this);
-        this.ingame = new UiInGame(this);
+        this.ingame = new UiInGame(this,gameManager);
         this.uiPauseGame = new PauseGame(this);
         this.uiWin = new UiWin(this);
         this.uiLose = new UILose(this);
@@ -38,13 +38,14 @@ export class UIManager {
         this.uiRenderer = new UIGameRenderer(this, this.context, this.canvas, 'mainMenu');
         this.inputHandle = new InputHandler(this.canvas, this.context);
         this.gameState = UIManager.UIState.mainmenu;
+        
     }
 
 
     init() {
         this.inputHandle.on('mouseDown', this.handleOnClick.bind(this));
-        this.gameManager.onActionWin = this.ActionWin;
-        this.gameManager.onActionLose = this.ActionLose; 
+        this.gameManager.on('win', this.OnActionWin.bind(this));
+        this.gameManager.on('lose', this.OnActionLose.bind(this));
     }
 
     draw() {
@@ -60,13 +61,13 @@ export class UIManager {
             case UIManager.UIState.mainmenu:
                 switch (this.mainMenu.event(pos)) {
                     case 0:
-                        this.StartGame();
+                        this.OnButtonStartGameClick();
                         break;
                     case 1:
-                        this.ChoseLevel();
+                        this.OnChoseLevel();
                         break;
                     case 2:
-                        this.ShowRecordPlayer();
+                        this.OnButtonShowRecordPlayerClick();
                         break;
 
                 }
@@ -74,8 +75,7 @@ export class UIManager {
             case UIManager.UIState.ingame:
                 switch (this.ingame.event(pos)) {
                     case 0:
-                        console.log('run pause');
-                        this.PauseGame();
+                        this.OnButtonPauseClick();
                         break;
                 }
                 break;
@@ -83,33 +83,33 @@ export class UIManager {
                 console.log(this.uiPauseGame.event(pos));
                 switch (this.uiPauseGame.event(pos)) {
                     case 0:
-                        this.ContinueGame();
+                        this.OnButtonContinueClick();
                         break;
                     case 1:
-                        this.RestartGame();
+                        this.OnButtonRestartGameClick();
                         break;
                     case 2:
-                        this.BackToMainMenu();
+                        this.OnButtonBackToMainMenuClick();
                         break;
                 }
                 break;
             case UIManager.UIState.wingame:
                 switch (this.uiWin.event(pos)) {
                     case 0:
-                        this.RestartGame();
+                        this.OnButtonRestartGameClick();
                         break;
                     case 1:
-                        this.BackToMainMenu();
+                        this.OnButtonBackToMainMenuClick();
                         break;
                 }
                 break;
             case UIManager.UIState.losegame:
                 switch (this.uiWin.event(pos)) {
                     case 0:
-                        this.RestartGame();
+                        this.OnButtonRestartGameClick();
                         break;
                     case 1:
-                        this.BackToMainMenu();
+                        this.OnButtonBackToMainMenuClick();
                         break;
                 }
                 break;
@@ -118,15 +118,15 @@ export class UIManager {
                 {
                     case 0:
                      
-                        this.EasyLevel();
+                        this.OnButtonEasyLevelClick();
                         break;
                     case 1:
                        
-                        this.MediumLevel();
+                        this.OnButtonMediumLevelClick();
                         break;
                     case 2:
                       
-                        this.HardLevel();
+                        this.OnButtonHardLevelClick();
                         break;
                 }
                 break;
@@ -134,7 +134,7 @@ export class UIManager {
                 switch(this.uiPlayerRecord.event(pos))
                 {
                     case 0:
-                        this.BackToMainMenu();
+                        this.OnButtonBackToMainMenuClick();
                         break;
                 }
                 break;
@@ -143,69 +143,74 @@ export class UIManager {
     }
 
 
-    StartGame() {
-       this.gameManager.PlayGame(LevelManager.LevelType.easy);
+    OnButtonStartGameClick() {
+       this.gameManager.PlayGame(LevelManager.LevelType.EASY);
        this.gameState = UIManager.UIState.ingame;
+       SoundManager.PlaySoundBackGround('background');
+     
     }
 
 
-    RestartGame()
+    OnButtonRestartGameClick()
     {
         this.gameManager.ResetGame();
         this.gameState = UIManager.UIState.ingame;
     }
 
 
-    ShowRecordPlayer()
+    OnButtonShowRecordPlayerClick()
     {
         this.gameState = UIManager.UIState.showrecord;
         this.uiPlayerRecord.setRecord();
     }
 
-    EasyLevel()
+    OnButtonEasyLevelClick()
     {
-        this.gameManager.PlayGame(LevelManager.LevelType.easy);
+        this.gameManager.PlayGame(LevelManager.LevelType.EASY);
+        console.log(LevelManager.LevelType.EASY);
         this.gameState = UIManager.UIState.ingame;
     }
-    MediumLevel()
+    OnButtonMediumLevelClick()
     {
-        this.gameManager.PlayGame(LevelManager.LevelType.medium);
+        this.gameManager.PlayGame(LevelManager.LevelType.MEDIUM);
         this.gameState = UIManager.UIState.ingame;
     }
-    HardLevel()
+    OnButtonHardLevelClick()
     {
-        this.gameManager.PlayGame(LevelManager.LevelType.hard);
+        this.gameManager.PlayGame(LevelManager.LevelType.HARD);
         this.gameState = UIManager.UIState.ingame;
     }
 
 
-    ChoseLevel()
+    OnChoseLevel()
     {
         this.gameState = UIManager.UIState.choselevel;
     }
 
-    PauseGame() {
+    OnButtonPauseClick() {
         this.gameManager.isPause = true;
         this.gameState = UIManager.UIState.pausegame;
     }
-    ContinueGame() {
+    OnButtonContinueClick() {
         this.gameManager.isPause = false;
         this.gameState = UIManager.UIState.ingame;
     }
-    BackToMainMenu() {
+    OnButtonBackToMainMenuClick() {
         this.gameManager.isgameActive = false;
         this.gameState = UIManager.UIState.mainmenu;
     }
 
-    ActionWin(score,time)
-    {
-        SoundManager.PlaySound('wingame'); // ActiveSound
-        this.uiWin.setParameter(score,time);
+ 
+
+
+    OnActionWin({ score, time }) {
+        SoundManager.PlaySoundSFX('wingame');
+        this.uiWin.setParameter(score, time);
         this.gameState = UIManager.UIState.wingame;
     }
-    ActionLose(score)
+    OnActionLose({score})
     {
-        SoundManager.PlaySound('losegame'); // Active sound
+        SoundManager.PlaySoundSFX('losegame'); // Active sound
         this.uiLose.setParameter(score);
         this.gameState = UIManager.UIState.losegame;
     }
