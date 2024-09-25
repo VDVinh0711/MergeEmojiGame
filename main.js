@@ -30,8 +30,7 @@ function gameLoop(timeStamp) {
     oldTimeStamp = timeStamp;
 
     gameManager.update(deltaTime);
-   // gameManager.gameColision();
-    gameManager.draw();
+    gameManager.render();
 
 
     uiManager.draw();

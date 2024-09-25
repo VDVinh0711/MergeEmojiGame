@@ -10,7 +10,7 @@ import { EventEmitter } from '../DesignPattern/EventEmiter.js';
 import { ScoreManager } from './ScoreManager.js';
 import { CollisionManager } from './ColisionManager.js';
 import { TimeManager } from './TimeManager.js';
-
+import { Box } from '../Utils/Box.js';
 
 export class GameManager extends EventEmitter {
 
@@ -22,35 +22,31 @@ export class GameManager extends EventEmitter {
         //GameConfig
         this.isWin = false;
         this.isLose = false;
+        this.isGameActive = true;
+        this.isPause = false;
 
         this.loseCountdownTime = 4;
         this.initialLoseCountdownTime = 4;
 
-        //PlayerConfig
-       
+        //GameCore
         this.playerScore = new ScoreManager();
         this.collisionManager = new CollisionManager(this);
         this.timeManager = new TimeManager();
-
-        //Box Config
-        this.rightBox = 0;
-        this.leftBox = 0;
-        this.topBox = 0;
-        this.bottomBox = 0;
-        this.componentManger = new ComponentManager(this.context);
-        this.inputHandler = new InputHandler(this.canvas, this.context);
+        this.componentManger = new ComponentManager(this.canvas, this.context);
         this.renderer = new GameRenderer(this);
+
+        //Utils
+        this.Box = new Box(this.canvas, this.context);
+        this.inputHandler = new InputHandler(this.canvas, this.context);
         this.poolingEmojis = new ObjectPooling(this.context, Emoji, 100);
-        this.isGameActive = true;
-        this.isPause = false;
+
 
         this.Init();
     }
 
-   
+
 
     Init() {
-        this.setParamsForBox();
         this.setupEventListeners();
         this.componentManger.userGuide.createFormulaGuide(this.leftBox + 50, this.canvas.height - 100);
     }
@@ -81,25 +77,21 @@ export class GameManager extends EventEmitter {
         this.timeManager.resetTime();
         this.poolingEmojis.reset();
         this.componentManger.reset();
-       
+
     }
 
-    setParamsForBox() {
-        this.rightBox = this.canvas.width / 2 + 300;
-        this.leftBox = this.canvas.width / 2 - 300;
-        this.bottomBox = this.canvas.height - 200;
-        this.topBox = this.bottomBox - 500;
-    }
+
 
 
     update(deltatime) {
 
         if (!this.isGameActive || this.isPause || this.isWin || this.isLose) return;
         //Time
-       this.timeManager.updateTime(deltatime);
-       //Update State
+        this.timeManager.updateTime(deltatime);
+        //Update State
         this.poolingEmojis.activeObjs.forEach(obj => {
-        if (!obj.canMerge) { obj.updateState(this.topBox); }});
+            if (!obj.canMerge) { obj.updateState(this.Box.topBox); }
+        });
 
         //update Emoji
         this.poolingEmojis.activeObjs.forEach(gameObject => {
@@ -111,46 +103,43 @@ export class GameManager extends EventEmitter {
         if (this.collisionManager.isCollidingWithBoundary) {
             this.handlePotentialLoss(deltatime);
         }
-        else
-        {
+        else {
             this.loseCountdownTime = this.initialLoseCountdownTime;
         }
     }
 
-    draw() {
+    render() {
         if (!this.isGameActive) return;
         this.renderer.render();
-        this.componentManger.renderComponent();
+
     }
 
     handlePotentialLoss(deltatime) {
         this.loseCountdownTime -= deltatime;
         if (this.loseCountdownTime <= 0) {
             this.isLose = true;
-            this.emit('lose', { score: this.playerScore.score});
+            this.emit('lose', { score: this.playerScore.score });
         }
     }
     MergedEmojis(obj1, obj2,) {
-            const nextEmoji = EmojiDatas.getNextEmoji(obj1.type);
-            SoundManager.PlaySoundSFX('mergesound');
-            //Check Win
-            if (nextEmoji.type == EmojiDatas.GetLastEmoji().type) {
-             this.handleWin(); 
-            }
-            obj1.updateModelEmoji(nextEmoji.radius, nextEmoji.type, nextEmoji.srcIMG);
-            this.poolingEmojis.deSpawn(obj2);
-            this.handleAfterMergeEmoji(obj1,nextEmoji);
+        const nextEmoji = EmojiDatas.getNextEmoji(obj1.type);
+        SoundManager.PlaySoundSFX('mergesound');
+        //Check Win
+        if (nextEmoji.type == EmojiDatas.GetLastEmoji().type) {
+            this.handleWin();
+        }
+        obj1.updateModelEmoji(nextEmoji.radius, nextEmoji.type, nextEmoji.srcIMG);
+        this.poolingEmojis.deSpawn(obj2);
+        this.handleAfterMergeEmoji(obj1, nextEmoji);
     }
 
-    handleWin()
-    {
+    handleWin() {
         LevelManager.setNewRecord(this.timeManager.time);
         this.isWin = true;
         console.log("win");
         this.emit('win', { score: this.playerScore.getScore(), time: this.timeManager.time });
     }
-    handleAfterMergeEmoji( obj,nextEmoji)
-    {
+    handleAfterMergeEmoji(obj, nextEmoji) {
         this.playerScore.addScore(nextEmoji.score);
         this.componentManger.scorePopup.spawm(obj.x, obj.y - obj.radius, nextEmoji.score);
         this.componentManger.particles.spawm(obj.x, obj.y);
@@ -163,8 +152,8 @@ export class GameManager extends EventEmitter {
     //Event Handle Mouse
     handleMouseDown(mousePos) {
         // Logic for mouse down
-        if (this.isPause || this.isWin || this.isLose ||  mousePos.y < 100 ) return;
-        if (mousePos.y > this.topBox - EmojiDatas.GetLastEmoji().radius) return;
+        if (this.isPause || this.isWin || this.isLose || mousePos.y < 100) return;
+        if (mousePos.y > this.Box.topBox - EmojiDatas.GetLastEmoji().radius) return;
         this.newEmoji = this.poolingEmojis.get();
         const emojiType = EmojiDatas.GetRandomTypeEmoji();
         const assetEmoji = EmojiDatas.GetAssetEmoji(emojiType);
@@ -176,14 +165,14 @@ export class GameManager extends EventEmitter {
     handleMouseDrag(mousePos) {
 
         if (this.newEmoji == null) return;
-        if (mousePos.y >= this.topBox - this.newEmoji.radius) {
-            mousePos.y = this.topBox - this.newEmoji.radius;
+        if (mousePos.y >= this.Box.topBox - this.newEmoji.radius) {
+            mousePos.y = this.Box.topBox - this.newEmoji.radius;
         }
-        if (mousePos.x <= this.leftBox + this.newEmoji.radius) {
-            mousePos.x = this.leftBox + this.newEmoji.radius;
+        if (mousePos.x <= this.Box.leftBox + this.newEmoji.radius) {
+            mousePos.x = this.Box.leftBox + this.newEmoji.radius;
         }
-        if (mousePos.x >= this.rightBox - this.radius) {
-            mousePos.x = this.rightBox - this.newEmoji.radius;
+        if (mousePos.x >= this.Box.rightBox - this.radius) {
+            mousePos.x = this.Box.rightBox - this.newEmoji.radius;
         }
         this.newEmoji.x = mousePos.x;
         this.newEmoji.y = mousePos.y;

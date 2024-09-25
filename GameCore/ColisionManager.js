@@ -7,8 +7,8 @@ export class CollisionManager {
     checkCollisions() {
         this.resetCollisions();
         this.handleEmojiCollisions();
-        this.checkBoundaryCollisions();
-        this.detectedColisionBox();
+        this.checkBoundaryCollisions(this.gameManager.Box);
+        this.detectedColisionBox(this.gameManager.Box);
     }
 
     resetCollisions() {
@@ -40,10 +40,10 @@ export class CollisionManager {
        
     }
 
-    checkBoundaryCollisions() {
+    checkBoundaryCollisions(Box) {
         let count = 0;
         this.gameManager.poolingEmojis.activeObjs.forEach(obj => {
-            if (obj.canCheckLose && obj.y - obj.radius / 2 < this.gameManager.topBox) {
+            if (obj.canCheckLose && obj.y - obj.radius / 2 < Box.topBox) {
                 count++;
             }
         });
@@ -78,25 +78,27 @@ export class CollisionManager {
         }
     }
 
-    detectedColisionBox()
+    detectedColisionBox(Box)
     {
         this.gameManager.poolingEmojis.activeObjs.forEach(gameObject => {
-            if (gameObject.x < this.gameManager.leftBox + gameObject.radius) {
+            if (gameObject.x < Box.leftBox + gameObject.radius) {
                 gameObject.vx = Math.abs(gameObject.vx) * 0.5;
-                gameObject.x = this.gameManager.leftBox + gameObject.radius;
+                gameObject.x = Box.leftBox + gameObject.radius;
             }
-            else if (gameObject.x + gameObject.radius >= this.gameManager.rightBox) {
+            else if (gameObject.x + gameObject.radius >= Box.rightBox) {
                 gameObject.vx = -Math.abs(gameObject.vx) * 0.5;
-                gameObject.x = this.gameManager.rightBox - gameObject.radius;
+                gameObject.x = Box.rightBox - gameObject.radius;
             }
 
-            if (gameObject.y + gameObject.radius >= this.gameManager.bottomBox &&
-                gameObject.x > this.gameManager.leftBox && gameObject.x < this.gameManager.rightBox
+            if (gameObject.y + gameObject.radius >= Box.bottomBox &&
+                gameObject.x > Box.leftBox && gameObject.x < Box.rightBox
             ) {
                 gameObject.vy = -Math.abs(gameObject.vy) * 0.1;
                 gameObject.vx *= 0.95;
-                gameObject.y = this.gameManager.bottomBox - gameObject.radius;
+                gameObject.y = Box.bottomBox - gameObject.radius;
             }
+
+            //this.gameManager.componentManger.Box.colisionWithBox(gameObject);
         }
         )
     }
